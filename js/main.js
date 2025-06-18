@@ -1,5 +1,10 @@
 import { obterDados } from './api.js';
-import { criarTabela, ativarModoEdicao, atualizarEstado } from './ui.js';
+import { criarTabela, toggleModoEdicao, atualizarEstado } from './ui.js';
+
+document.getElementById('modoEdicao').addEventListener('click', () => {
+  toggleModoEdicao();
+  atualizarEstado(modoEdicaoAtivo ? 'Modo edição ativado' : 'Modo leitura');
+});
 
 let dadosGlobais = [];
 
