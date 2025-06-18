@@ -7,13 +7,8 @@ async function carregarDados() {
   try {
     const resposta = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
     const json = await resposta.json();
-
-    if (!json || !json.dados || !Array.isArray(json.dados)) {
-      throw new Error('Resposta inesperada do servidor');
-    }
-
-    dadosOriginais = json.dados;
-    criarTabela(JSON.parse(JSON.stringify(dadosOriginais))); // clone defensivo
+    dadosOriginais = JSON.parse(JSON.stringify(json.dados)); // cópia profunda
+    criarTabela(dadosOriginais);
     atualizarEstado('Pronto');
   } catch (e) {
     console.error(e);
@@ -40,7 +35,7 @@ function filtrarFaltas() {
 
 function mostrarTudo() {
   atualizarEstado('A mostrar todos os dados...');
-  const dados = obterDadosAtuais();
+  const dados = obterDadosAtuais(); // usa os dados atuais editados
   criarTabela(dados);
   atualizarEstado('Pronto');
 }
