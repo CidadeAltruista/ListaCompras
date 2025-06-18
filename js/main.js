@@ -1,55 +1,48 @@
-import { obterDados } from './api.js';
-import { criarTabela, toggleModoEdicao, atualizarEstado } from './ui.js';
+import { criarTabela, obterDadosAtuais, atualizarEstado } from './ui.js';
 
-document.getElementById('modoEdicao').addEventListener('click', () => {
-  toggleModoEdicao();
-  atualizarEstado(modoEdicaoAtivo ? 'Modo edição ativado' : 'Modo leitura');
-});
+let dadosOriginais = [];
 
-let dadosGlobais = [];
-
-async function carregar() {
-  atualizarEstado('A receber dados...');
+async function carregarDados() {
+  atualizarEstado('A carregar dados...');
   try {
-    dadosGlobais = await obterDados();
-    criarTabela(dadosGlobais);
+    const resposta = await fetch('https://script.google.com/macros/s/AKfycbxA8.../exec');
+    const json = await resposta.json();
+    dadosOriginais = json.dados;
+    criarTabela(dadosOriginais);
     atualizarEstado('Pronto');
   } catch (e) {
     atualizarEstado('Erro ao carregar dados.');
-    console.error(e);
   }
 }
 
-document.getElementById('filtroF').addEventListener('click', () => {
-  atualizarEstado('A aplicar filtro...');
-  const cabecalho = dadosGlobais[0];
-  const subcabecalho = dadosGlobais[1];
-  const propriedades = [];
-
-  for (let i = 2; i < cabecalho.length; i += 2) {
-    propriedades.push(i);
+function filtrarFaltas() {
+  atualizarEstado('A aplicar filtro de faltas...');
+  const dados = obterDadosAtuais();
+  const filtrados = [dados[0], dados[1]];
+  for (let i = 2; i < dados.length; i++) {
+    const linha = dados[i];
+    for (let j = 2; j < linha.length; j += 2) {
+      if (linha[j] === 'F') {
+        filtrados.push(linha);
+        break;
+      }
+    }
   }
-
-  const filtrados = [cabecalho, subcabecalho].concat(
-    dadosGlobais.slice(2).filter(linha => {
-      if (!linha[1]) return false;
-      return propriedades.some(i => linha[i] === 'F');
-    })
-  );
-
   criarTabela(filtrados);
-  atualizarEstado('Filtro aplicado');
-});
-
-document.getElementById('filtroReset').addEventListener('click', () => {
-  atualizarEstado('A remover filtro...');
-  criarTabela(dadosGlobais);
   atualizarEstado('Pronto');
-});
+}
 
+function mostrarTudo() {
+  atualizarEstado('A mostrar todos os dados...');
+  const dados = obterDadosAtuais();
+  criarTabela(dados);
+  atualizarEstado('Pronto');
+}
+
+document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
+document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
 document.getElementById('modoEdicao').addEventListener('click', () => {
-  ativarModoEdicao();
-  atualizarEstado('Modo edição ativado');
+  import('./ui.js').then(m => m.toggleModoEdicao());
 });
 
-carregar();
+carregarDados();

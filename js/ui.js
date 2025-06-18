@@ -9,7 +9,10 @@ export function atualizarEstado(texto) {
 
 export function toggleModoEdicao() {
   modoEdicaoAtivo = !modoEdicaoAtivo;
+  aplicarModoEdicao();
+}
 
+export function aplicarModoEdicao() {
   const botao = document.getElementById('modoEdicao');
   botao.textContent = modoEdicaoAtivo ? 'Concluir' : 'Edição';
 
@@ -25,7 +28,7 @@ export function obterDadosAtuais() {
 }
 
 export function criarTabela(dados) {
-  dadosAtuais = JSON.parse(JSON.stringify(dados)); // faz cópia profunda
+  dadosAtuais = JSON.parse(JSON.stringify(dados)); // cópia segura
   const wrapper = document.getElementById('tabela');
   wrapper.innerHTML = '';
 
@@ -174,4 +177,5 @@ export function criarTabela(dados) {
 
   tabela.appendChild(tbody);
   wrapper.appendChild(tabela);
+  if (modoEdicaoAtivo) aplicarModoEdicao();
 }
