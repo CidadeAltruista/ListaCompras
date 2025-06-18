@@ -2,17 +2,20 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('main.js carregado');
 
   import('./ui.js').then(({ criarTabela, atualizarEstado, toggleModoEdicao }) => {
-    // 1) guarda aqui sempre todos os dados (pós‐fetch e pós‐edições)
-    let dadosComAlteracoes = [];
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec';
+
+    // Função para buscar dados do Excel
+    async function buscarDados() {
+      atualizarEstado('A carregar dados do Sheets...');
+      const res = await fetch(API_URL);
+      const json = await res.json();
+      return JSON.parse(JSON.stringify(json.dados));
+    }
 
     async function carregarDados() {
-      atualizarEstado('A carregar dados...');
       try {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
-        const json = await res.json();
-        // cópia profunda para podermos editar sem perder o original
-        dadosComAlteracoes = JSON.parse(JSON.stringify(json.dados));
-        criarTabela(dadosComAlteracoes);
+        const dados = await buscarDados();
+        criarTabela(dados);
         atualizarEstado('Pronto');
       } catch (err) {
         console.error(err);
@@ -20,35 +23,36 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function filtrarFaltas() {
-      atualizarEstado('A aplicar filtro de faltas...');
-      const filtrados = [dadosComAlteracoes[0], dadosComAlteracoes[1]];
-      for (let i = 2; i < dadosComAlteracoes.length; i++) {
-        const linha = dadosComAlteracoes[i];
-        for (let j = 2; j < linha.length; j += 2) {
-          if (linha[j] === 'F') {
-            filtrados.push(linha);
-            break;
+    async function filtrarFaltas() {
+      try {
+        const dados = await buscarDados();
+        atualizarEstado('A aplicar filtro de faltas...');
+        const filtrados = [dados[0], dados[1]];
+        for (let i = 2; i < dados.length; i++) {
+          const linha = dados[i];
+          for (let j = 2; j < linha.length; j += 2) {
+            if (linha[j] === 'F') { filtrados.push(linha); break; }
           }
         }
+        criarTabela(filtrados);
+        atualizarEstado('Pronto');
+      } catch (err) {
+        console.error(err);
+        atualizarEstado('Erro ao filtrar dados.');
       }
-      criarTabela(filtrados);
-      atualizarEstado('Pronto');
     }
 
-    function mostrarTudo() {
-      atualizarEstado('A mostrar todos os dados...');
-      // aqui usamos sempre o array completo armazenado em dadosComAlteracoes
-      criarTabela(dadosComAlteracoes);
-      atualizarEstado('Pronto');
+    async function mostrarTudo() {
+      // Recarrega diretamente do Sheets
+      await carregarDados();
     }
 
-    // ligações de eventos — IDs coincidem com o teu HTML
+    // Ligar eventos
     document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
     document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
     document.getElementById('modoEdicao').addEventListener('click', toggleModoEdicao);
 
-    // arranca tudo
+    // Carrega inicial
     carregarDados();
   });
 });
