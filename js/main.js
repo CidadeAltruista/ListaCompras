@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
       atualizarEstado('Pronto');
     }
 
-    // 🔁 Agora os elementos DOM existem de certeza
     document.getElementById('filtroF').addEventListener('click', filtrarFaltas);
     document.getElementById('filtroReset').addEventListener('click', mostrarTudo);
     document.getElementById('modoEdicao').addEventListener('click', toggleModoEdicao);
