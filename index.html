@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -10,20 +10,26 @@
   <h1 class="text-2xl font-bold text-center mb-4">Lista de Compras</h1>
 
   <div class="flex justify-center gap-4 mb-4">
-<button id="modoEdicao" class="bg-green-600 text-white px-4 py-2 rounded">
-  Edição
-</button>
-<button id="mostrarFaltas" class="bg-blue-500 text-white px-4 py-2 rounded">
-  Mostrar Em Falta
-</button>
-<button id="mostrarTudo" class="bg-gray-600 text-white px-4 py-2 rounded">
-  Mostrar Tudo
-</button>
-
+    <button id="modoEdicao" class="bg-green-600 text-white px-4 py-2 rounded">Edição</button>
+    <button id="mostrarFaltas" class="bg-blue-500 text-white px-4 py-2 rounded">Mostrar Em Falta</button>
+    <button id="mostrarTudo" class="bg-gray-600 text-white px-4 py-2 rounded">Mostrar Tudo</button>
   </div>
-  
+
   <div id="estado" class="text-center text-sm text-gray-600 mb-4"></div>
 
+  <!-- Adicionar aqui o input de pesquisa e sugestões -->
+  <div class="mb-4 relative">
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="Pesquisar artigo…"
+      class="w-full md:w-1/2 border rounded px-3 py-2 focus:outline-none focus:ring"
+    />
+    <ul
+      id="suggestions"
+      class="absolute bg-white border rounded mt-1 max-h-40 overflow-auto shadow w-full md:w-1/2 z-10"
+    ></ul>
+  </div>
 
   <div id="tabela" class="overflow-x-auto"></div>
 
