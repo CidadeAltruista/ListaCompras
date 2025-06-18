@@ -16,7 +16,7 @@ export function criarTabela(dados) {
   thead.appendChild(headerRow);
   tabela.appendChild(thead);
 
-  // Corpo
+  // Corpo de quem?
   const tbody = document.createElement('tbody');
   for (let i = 1; i < dados.length; i++) {
     const row = document.createElement('tr');
