@@ -1,5 +1,5 @@
 const SHEET_ID = '1som9-aGql45SsU5LwkT--dhXeiT8S4Vs6w838_DzT7U';
-const API_URL = 'https://script.google.com/macros/s/AKfycbzEIwRB5tEJXrdrKU8XNyYJTxahE4KyLU0Nw6kEGOwddR1oa4K0tWJZUXCJNKehAIaBZw/exec'; // <- atualiza aqui
+const API_URL = 'https://script.google.com/macros/s/AKfycby6Bb4Q1qMnpGtXZVb3LxdmmeqbESEZn_PFRqjEDKdnMIkbHG8OI7M6iYy6GflecHrn/exec'; // <- atualiza aqui
 
 export async function obterDados() {
   const res = await fetch(`${API_URL}?sheet=Lista`);
