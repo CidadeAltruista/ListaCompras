@@ -5,7 +5,7 @@ let dadosOriginais = [];
 async function carregarDados() {
   atualizarEstado('A carregar dados...');
   try {
-    const resposta = await fetch('https://script.google.com/macros/s/AKfycbxgVfBNQhn7npWuc9m0LlSmC6F08yYGLS0ULLqt4UvnjbBeuKhI39rWn13fleeflCo50g/exec');
+    const resposta = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
     const json = await resposta.json();
     dadosOriginais = json.dados;
     criarTabela(dadosOriginais);
