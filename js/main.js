@@ -1,29 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('main.js carregado');
 
-  import('./ui.js').then(({ criarTabela, obterDadosAtuais, atualizarEstado, toggleModoEdicao }) => {
-    let dadosOriginais = [];
+  import('./ui.js').then(({ criarTabela, atualizarEstado, toggleModoEdicao }) => {
+    // 1) guarda aqui sempre todos os dados (pós‐fetch e pós‐edições)
+    let dadosComAlteracoes = [];
 
     async function carregarDados() {
       atualizarEstado('A carregar dados...');
       try {
-        const resposta = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
-        const json = await resposta.json();
-        dadosOriginais = JSON.parse(JSON.stringify(json.dados)); // clone defensivo
-        criarTabela(dadosOriginais);
+        const res = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
+        const json = await res.json();
+        // cópia profunda para podermos editar sem perder o original
+        dadosComAlteracoes = JSON.parse(JSON.stringify(json.dados));
+        criarTabela(dadosComAlteracoes);
         atualizarEstado('Pronto');
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
         atualizarEstado('Erro ao carregar dados.');
       }
     }
 
     function filtrarFaltas() {
       atualizarEstado('A aplicar filtro de faltas...');
-      const dados = obterDadosAtuais();
-      const filtrados = [dados[0], dados[1]];
-      for (let i = 2; i < dados.length; i++) {
-        const linha = dados[i];
+      const filtrados = [dadosComAlteracoes[0], dadosComAlteracoes[1]];
+      for (let i = 2; i < dadosComAlteracoes.length; i++) {
+        const linha = dadosComAlteracoes[i];
         for (let j = 2; j < linha.length; j += 2) {
           if (linha[j] === 'F') {
             filtrados.push(linha);
@@ -37,16 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function mostrarTudo() {
       atualizarEstado('A mostrar todos os dados...');
-      const dados = obterDadosAtuais();
-      criarTabela(dados);
+      // aqui usamos sempre o array completo armazenado em dadosComAlteracoes
+      criarTabela(dadosComAlteracoes);
       atualizarEstado('Pronto');
     }
 
-    // **Aqui usamos os IDs que existem no teu HTML:**
+    // ligações de eventos — IDs coincidem com o teu HTML
     document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
     document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
     document.getElementById('modoEdicao').addEventListener('click', toggleModoEdicao);
 
+    // arranca tudo
     carregarDados();
   });
 });
