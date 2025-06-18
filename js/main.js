@@ -1,17 +1,18 @@
 console.log('main.js carregado');
 
-
 import { criarTabela, obterDadosAtuais, atualizarEstado } from './ui.js';
 
 let dadosOriginais = [];
+let dadosComAlteracoes = [];
 
 async function carregarDados() {
   atualizarEstado('A carregar dados...');
   try {
     const resposta = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
     const json = await resposta.json();
-    dadosOriginais = JSON.parse(JSON.stringify(json.dados)); // cópia profunda
-    criarTabela(dadosOriginais);
+    dadosOriginais = JSON.parse(JSON.stringify(json.dados));
+    dadosComAlteracoes = JSON.parse(JSON.stringify(json.dados));
+    criarTabela(dadosComAlteracoes);
     atualizarEstado('Pronto');
   } catch (e) {
     console.error(e);
@@ -21,8 +22,9 @@ async function carregarDados() {
 
 function filtrarFaltas() {
   atualizarEstado('A aplicar filtro de faltas...');
-  const dados = obterDadosAtuais();
+  const dados = dadosComAlteracoes;
   const filtrados = [dados[0], dados[1]];
+
   for (let i = 2; i < dados.length; i++) {
     const linha = dados[i];
     for (let j = 2; j < linha.length; j += 2) {
@@ -32,14 +34,14 @@ function filtrarFaltas() {
       }
     }
   }
+
   criarTabela(filtrados);
   atualizarEstado('Pronto');
 }
 
 function mostrarTudo() {
   atualizarEstado('A mostrar todos os dados...');
-  const dados = obterDadosAtuais(); // usa os dados atuais editados
-  criarTabela(dados);
+  criarTabela(dadosComAlteracoes);
   atualizarEstado('Pronto');
 }
 
