@@ -7,10 +7,16 @@ async function carregarDados() {
   try {
     const resposta = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
     const json = await resposta.json();
+
+    if (!json || !json.dados || !Array.isArray(json.dados)) {
+      throw new Error('Resposta inesperada do servidor');
+    }
+
     dadosOriginais = json.dados;
-    criarTabela(JSON.parse(JSON.stringify(dadosOriginais))); // copia profunda
+    criarTabela(JSON.parse(JSON.stringify(dadosOriginais))); // clone defensivo
     atualizarEstado('Pronto');
   } catch (e) {
+    console.error(e);
     atualizarEstado('Erro ao carregar dados.');
   }
 }
