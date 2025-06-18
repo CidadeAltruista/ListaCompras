@@ -1,5 +1,5 @@
 import { obterDados } from './api.js';
-import { criarTabela } from './ui.js';
+import { criarTabela, ativarModoEdicao } from './ui.js';
 
 let dadosGlobais = [];
 
@@ -9,14 +9,30 @@ async function carregar() {
 }
 
 document.getElementById('filtroF').addEventListener('click', () => {
-  const filtrados = [dadosGlobais[0]].concat(
-    dadosGlobais.slice(1).filter(linha => linha.slice(2).includes('F'))
+  const cabecalho = dadosGlobais[0];
+  const subcabecalho = dadosGlobais[1];
+  const propriedades = [];
+
+  for (let i = 2; i < cabecalho.length; i += 2) {
+    propriedades.push(i);
+  }
+
+  const filtrados = [cabecalho, subcabecalho].concat(
+    dadosGlobais.slice(2).filter(linha => {
+      if (!linha[1]) return false;
+      return propriedades.some(i => linha[i] === 'F');
+    })
   );
+
   criarTabela(filtrados);
 });
 
 document.getElementById('filtroReset').addEventListener('click', () => {
   criarTabela(dadosGlobais);
+});
+
+document.getElementById('modoEdicao').addEventListener('click', () => {
+  ativarModoEdicao();
 });
 
 carregar();
