@@ -1,6 +1,7 @@
 import { atualizarCelula } from './api.js';
 
 let modoEdicaoAtivo = false;
+let dadosAtuais = [];
 
 export function atualizarEstado(texto) {
   document.getElementById('estado').textContent = texto;
@@ -19,12 +20,17 @@ export function toggleModoEdicao() {
   });
 }
 
+export function obterDadosAtuais() {
+  return dadosAtuais;
+}
+
 export function criarTabela(dados) {
+  dadosAtuais = JSON.parse(JSON.stringify(dados)); // faz cópia profunda
   const wrapper = document.getElementById('tabela');
   wrapper.innerHTML = '';
 
-  const cabecalho = dados[0];
-  const subCabecalho = dados[1];
+  const cabecalho = dadosAtuais[0];
+  const subCabecalho = dadosAtuais[1];
 
   const propriedades = [];
   for (let i = 2; i < cabecalho.length; i += 2) {
@@ -59,8 +65,8 @@ export function criarTabela(dados) {
 
   const tbody = document.createElement('tbody');
 
-  for (let i = 2; i < dados.length; i++) {
-    const linha = dados[i];
+  for (let i = 2; i < dadosAtuais.length; i++) {
+    const linha = dadosAtuais[i];
     if (!linha[1]) continue;
 
     const tr = document.createElement('tr');
@@ -74,19 +80,16 @@ export function criarTabela(dados) {
     tdArt.className = 'border px-3 py-2';
     tr.appendChild(tdArt);
 
-    const estadosLinha = [];
-
     function atualizarSomaFalta() {
       let total = 0;
       propriedades.forEach(p => {
-        const estado = document.querySelector(`#estado-${i}-${p.estadoCol}`)?.textContent;
-        const qtde = parseInt(document.querySelector(`#qtde-${i}-${p.qtdeCol}`)?.value || '0', 10);
+        const estado = linha[p.estadoCol];
+        const qtde = parseInt(linha[p.qtdeCol], 10);
         if (estado === 'F' && !isNaN(qtde)) total += qtde;
       });
       tdFaltaTotal.textContent = total > 0 ? total : '';
 
-      // Atualizar cor do artigo
-      const estados = propriedades.map(p => document.querySelector(`#estado-${i}-${p.estadoCol}`)?.textContent);
+      const estados = propriedades.map(p => linha[p.estadoCol]);
       tdArt.classList.remove('bg-red-100', 'bg-yellow-100');
       if (estados.includes('F')) tdArt.classList.add('bg-red-100');
       else if (estados.includes('C')) tdArt.classList.add('bg-yellow-100');
@@ -94,14 +97,12 @@ export function criarTabela(dados) {
 
     propriedades.forEach(({ estadoCol, qtdeCol }) => {
       const tdEstado = document.createElement('td');
-      tdEstado.id = `estado-${i}-${estadoCol}`;
       tdEstado.textContent = linha[estadoCol] || '';
       tdEstado.className = 'border px-2 py-1 text-center cursor-pointer opacity-50';
       tdEstado.dataset.tipo = 'estado';
       tdEstado.disabled = true;
 
       const tdQtde = document.createElement('td');
-      tdQtde.id = `qtde-${i}-${qtdeCol}`;
       const input = document.createElement('input');
       input.type = 'number';
       input.min = 0;
@@ -125,6 +126,7 @@ export function criarTabela(dados) {
         const novo = ciclo[tdEstado.textContent] || 'F';
         tdEstado.textContent = novo;
 
+        linha[estadoCol] = novo;
         tdEstado.classList.remove('bg-red-200', 'bg-yellow-200');
         tdQtde.classList.remove('bg-red-100', 'bg-yellow-100');
         if (novo === 'F') {
@@ -149,6 +151,7 @@ export function criarTabela(dados) {
         if (!modoEdicaoAtivo) return;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(async () => {
+          linha[qtdeCol] = input.value;
           atualizarSomaFalta();
           const linhaSheet = i + 1;
           const colSheet = qtdeCol + 1;
