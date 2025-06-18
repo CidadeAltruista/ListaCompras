@@ -1,27 +1,18 @@
 import { atualizarCelula } from './api.js';
 
 let modoEdicaoAtivo = false;
-let dadosAtuais = [];
+let dadosAtuais      = [];
 let rowIndicesAtuais = [];
 
-/**
- * Atualiza a mensagem de estado na UI
- */
 export function atualizarEstado(texto) {
   document.getElementById('estado').textContent = texto;
 }
 
-/**
- * Alterna entre modo edição e modo leitura
- */
 export function toggleModoEdicao() {
   modoEdicaoAtivo = !modoEdicaoAtivo;
   aplicarModoEdicao();
 }
 
-/**
- * Aplica visualmente o estado de edição (habilita inputs e cliques)
- */
 export function aplicarModoEdicao() {
   const botao = document.getElementById('modoEdicao');
   botao.textContent = modoEdicaoAtivo ? 'Concluir' : 'Edição';
@@ -33,11 +24,6 @@ export function aplicarModoEdicao() {
   });
 }
 
-/**
- * Cria e renderiza a tabela a partir dos dados e dos índices de linha no Sheets.
- * @param {Array[]} dados       – Matriz de linhas (cada linha é um array de células)
- * @param {number[]} rowIndices – Matriz de números de linha correspondentes em Google Sheets
- */
 export function criarTabela(dados, rowIndices) {
   dadosAtuais      = JSON.parse(JSON.stringify(dados));
   rowIndicesAtuais = JSON.parse(JSON.stringify(rowIndices));
@@ -45,162 +31,120 @@ export function criarTabela(dados, rowIndices) {
   const wrapper = document.getElementById('tabela');
   wrapper.innerHTML = '';
 
-  const cabecalho    = dadosAtuais[0];
-  const subCabecalho = dadosAtuais[1];
+  const cab = dadosAtuais[0], sub = dadosAtuais[1];
+  const props = [];
+  for (let i=2; i<cab.length; i+=2) props.push({ nome:cab[i], estadoCol:i, qtdeCol:i+1});
 
-  // Detecta colunas de pares (Estado / Qtde)
-  const propriedades = [];
-  for (let i = 2; i < cabecalho.length; i += 2) {
-    propriedades.push({ nome: cabecalho[i], estadoCol: i, qtdeCol: i + 1 });
-  }
+  // tabela
+  const table = document.createElement('table');
+  table.className = 'min-w-full bg-white shadow rounded text-sm';
 
-  // Construir <table>
-  const tabela = document.createElement('table');
-  tabela.className = 'min-w-full bg-white shadow rounded text-sm';
-
-  // Cabeçalho
-  const thead  = document.createElement('thead');
-  const headRow = document.createElement('tr');
-
-  // Coluna “Total F”
-  const thTotal = document.createElement('th');
-  thTotal.textContent = 'Total F';
-  thTotal.className = 'px-3 py-2 bg-gray-200 text-center';
-  headRow.appendChild(thTotal);
-
-  // Coluna “Artigo”
-  const thArt = document.createElement('th');
-  thArt.textContent = 'Artigo';
-  thArt.className = 'px-3 py-2 bg-gray-200 text-left';
-  headRow.appendChild(thArt);
-
-  // Colunas de propriedades
-  propriedades.forEach(p => {
+  // cabeçalho
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Total em Falta','Artigo', ...props.map(p=>p.nome)].forEach((txt,idx)=>{
     const th = document.createElement('th');
-    th.colSpan = 2;
-    th.textContent = p.nome;
-    th.className = 'px-3 py-2 bg-gray-200 text-center';
-    headRow.appendChild(th);
+    th.textContent = txt;
+    th.colSpan = idx<2?1:2;
+    th.className = 'px-2 py-1 bg-gray-200 text-center';
+    if(idx===1) th.classList.replace('text-center','text-left');
+    hr.appendChild(th);
   });
+  thead.appendChild(hr);
+  table.appendChild(thead);
 
-  thead.appendChild(headRow);
-  tabela.appendChild(thead);
-
-  // Corpo
   const tbody = document.createElement('tbody');
-
-  for (let idx = 2; idx < dadosAtuais.length; idx++) {
-    const linha    = dadosAtuais[idx];
-    const sheetRow = rowIndicesAtuais[idx];
-
-    if (!linha[1]) continue; // ignora sem artigo
-
+  for (let idx=2; idx<dadosAtuais.length; idx++) {
+    const row = dadosAtuais[idx], sheetRow=rowIndicesAtuais[idx];
+    if (!row[1]) continue;
     const tr = document.createElement('tr');
 
-    // Total F
-    const tdTotalF = document.createElement('td');
-    tdTotalF.className = 'border px-2 py-1 text-center font-semibold';
-    tr.appendChild(tdTotalF);
+    // Total em Falta
+    const tdSum = document.createElement('td');
+    tdSum.className = 'border px-2 py-1 text-center font-semibold';
+    tr.appendChild(tdSum);
 
     // Artigo
     const tdArt = document.createElement('td');
-    tdArt.textContent = linha[1];
-    tdArt.className = 'border px-3 py-2';
+    tdArt.textContent = row[1];
+    tdArt.className = 'border px-3 py-1'; // altura menor
     tr.appendChild(tdArt);
 
-    // Função para recalcular soma e cor do artigo
-    function atualizarSomaFalta() {
-      let soma = 0;
-      propriedades.forEach(p => {
-        if (linha[p.estadoCol] === 'F') {
-          const v = parseInt(linha[p.qtdeCol], 10);
-          if (!isNaN(v)) soma += v;
+    // recalc função
+    function updateSum() {
+      let s=0;
+      props.forEach(p=>{
+        if(row[p.estadoCol]==='F'){
+          const v=parseInt(row[p.qtdeCol],10);
+          if(!isNaN(v)) s+=v;
         }
       });
-      tdTotalF.textContent = soma > 0 ? soma : '';
+      tdSum.textContent = s>0?s:'';
       tdArt.classList.remove('bg-red-100','bg-yellow-100');
-      const estados = propriedades.map(p=>linha[p.estadoCol]);
-      if (estados.includes('F')) tdArt.classList.add('bg-red-100');
-      else if (estados.includes('C')) tdArt.classList.add('bg-yellow-100');
+      const es = props.map(p=>row[p.estadoCol]);
+      if(es.includes('F')) tdArt.classList.add('bg-red-100','text-red-800');
+      else if(es.includes('C')) tdArt.classList.add('bg-yellow-100');
     }
 
-    // Para cada par Estado/Qtde
-    propriedades.forEach(({estadoCol, qtdeCol})=>{
+    // para cada par Estado/Qtde
+    props.forEach(({estadoCol,qtdeCol})=>{
       // Estado
-      const tdEstado = document.createElement('td');
-      tdEstado.dataset.tipo = 'estado';
-      tdEstado.textContent   = linha[estadoCol] || '';
-      tdEstado.disabled      = true;
-      tdEstado.className     = 'border px-2 py-1 text-center cursor-pointer opacity-50';
+      const tdE = document.createElement('td');
+      tdE.dataset.tipo = 'estado';
+      tdE.disabled = true;
+      tdE.className='border px-2 py-1 text-center opacity-50 cursor-pointer';
 
-      // Qtde
-      const tdQtde = document.createElement('td');
-      tdQtde.className = 'border px-2 py-1';
-      const input = document.createElement('input');
-      input.type      = 'number';
-      input.min       = 0;
-      input.max       = 1000;
-      input.value     = linha[qtdeCol] || '';
-      input.disabled  = true;
-      input.className = 'w-full border px-2 py-1 rounded text-center opacity-50';
+      // Mapa de ícones
+      const icons = { 'F':'❌','C':'✔️','R':'✔️' };
+      const colors= { 'F':'text-red-600','C':'text-yellow-600','R':'text-green-600' };
+      const val = row[estadoCol]||'';
+      tdE.innerHTML = val?`<span class="${colors[val]||''}">${icons[val]}</span>`:'';
 
-      // cores iniciais
-      if (linha[estadoCol]==='F') {
-        tdEstado.classList.add('bg-red-200');
-        tdQtde.classList.add('bg-red-100');
-      } else if (linha[estadoCol]==='C') {
-        tdEstado.classList.add('bg-yellow-200');
-        tdQtde.classList.add('bg-yellow-100');
-      }
-
-      // clique no estado
-      tdEstado.addEventListener('click', async ()=>{
-        if (!modoEdicaoAtivo) return;
-        const ciclo = {'':'F','F':'C','C':'R','R':'F'};
-        const novo = ciclo[tdEstado.textContent]||'F';
-        tdEstado.textContent = novo;
-        linha[estadoCol] = novo;
-        tdEstado.classList.remove('bg-red-200','bg-yellow-200');
-        tdQtde.classList.remove('bg-red-100','bg-yellow-100');
-        if (novo==='F') {
-          tdEstado.classList.add('bg-red-200');
-          tdQtde.classList.add('bg-red-100');
-        } else if (novo==='C') {
-          tdEstado.classList.add('bg-yellow-200');
-          tdQtde.classList.add('bg-yellow-100');
-        }
-        atualizarSomaFalta();
+      tdE.addEventListener('click',async()=>{
+        if(!modoEdicaoAtivo) return;
+        const cycle={'':'F','F':'C','C':'R','R':'F'};
+        const novo = cycle[row[estadoCol]]||'F';
+        row[estadoCol]=novo;
+        tdE.innerHTML=`<span class="${colors[novo]}">${icons[novo]}</span>`;
+        updateSum();
         atualizarEstado('A enviar alteração...');
         await atualizarCelula(sheetRow, estadoCol+1, novo);
         atualizarEstado('Pronto');
       });
 
-      // debounce no input
-      let debounce;
-      input.addEventListener('input', ()=>{
-        if (!modoEdicaoAtivo) return;
-        clearTimeout(debounce);
-        debounce = setTimeout(async()=>{
-          const val = input.value;
-          linha[qtdeCol]=val;
-          atualizarSomaFalta();
+      // Qtde
+      const tdQ = document.createElement('td');
+      tdQ.className='border px-2 py-1';
+      const inp=document.createElement('input');
+      inp.type='number'; inp.min=0; inp.max=1000;
+      inp.value=row[qtdeCol]||'';
+      inp.disabled=true;
+      inp.className='w-full text-xs text-center border rounded px-1 py-1 opacity-50';
+
+      // debounce e cor de fundo
+      let db;
+      inp.addEventListener('input',()=>{
+        if(!modoEdicaoAtivo) return;
+        clearTimeout(db);
+        db=setTimeout(async()=>{
+          row[qtdeCol]=inp.value;
+          updateSum();
           atualizarEstado('A enviar quantidade...');
-          await atualizarCelula(sheetRow, qtdeCol+1, val);
+          await atualizarCelula(sheetRow, qtdeCol+1, inp.value);
           atualizarEstado('Pronto');
         },300);
       });
 
-      tdQtde.appendChild(input);
-      tr.appendChild(tdEstado);
-      tr.appendChild(tdQtde);
+      tr.appendChild(tdE);
+      tdQ.appendChild(inp);
+      tr.appendChild(tdQ);
     });
 
-    atualizarSomaFalta();
+    updateSum();
     tbody.appendChild(tr);
   }
 
-  tabela.appendChild(tbody);
-  wrapper.appendChild(tabela);
-
-  if (modoEdicaoAtivo) aplicarModoEdicao();
+  table.appendChild(tbody);
+  wrapper.appendChild(table);
+  if(modoEdicaoAtivo) aplicarModoEdicao();
 }

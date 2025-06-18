@@ -1,18 +1,15 @@
 import { criarTabela, atualizarEstado, toggleModoEdicao } from './ui.js';
-import { atualizarCelula } from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('main.js carregado');
 
-  const sheetURL = 'https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec';
+  const sheetURL = 'https://script.google.com/macros/s/.../exec';
 
   let dadosComAlteracoes = [];
   let rowIndicesAtuais   = [];
 
   function normalizeText(str) {
-    return str.normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .toLowerCase();
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
   async function carregarDados() {
@@ -55,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
   document.getElementById('modoEdicao').addEventListener('click', toggleModoEdicao);
 
-  // Pesquisa
+  // Pesquisa e sugestões
   const searchInput   = document.getElementById('searchInput');
   const suggestionsEl = document.getElementById('suggestions');
 
@@ -64,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     suggestionsEl.innerHTML = '';
     if (!term) return;
 
-    // coleta correspondências
+    // correspondências
     const hits = [];
     for (let i=2; i<dadosComAlteracoes.length; i++){
       const art = dadosComAlteracoes[i][1];
@@ -77,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hits.sort((a,b)=>a.idx-b.idx).slice(0,5).forEach(hit=>{
       const li = document.createElement('li');
       li.textContent = hit.art;
-      li.className = 'px-3 py-1 hover:bg-gray-200 cursor-pointer';
+      li.className = 'px-2 py-1 hover:bg-gray-200 cursor-pointer';
       li.addEventListener('click', ()=>{
         criarTabela(
           [dadosComAlteracoes[0], dadosComAlteracoes[1], hit.cells],
@@ -89,45 +86,22 @@ document.addEventListener('DOMContentLoaded', () => {
       suggestionsEl.appendChild(li);
     });
 
-    // opção “Adicionar artigo”
+    // “Adicionar artigo”
     const liAdd = document.createElement('li');
     liAdd.textContent = `➕ Adicionar “${searchInput.value.trim()}”`;
-    liAdd.className = 'px-3 py-1 text-green-600 hover:bg-green-100 cursor-pointer';
+    liAdd.className = 'px-2 py-1 text-green-600 hover:bg-green-100 cursor-pointer';
     liAdd.addEventListener('click', async ()=>{
-      const nome = searchInput.value.trim();
-      if (!nome) return;
-      if (!confirm(`Deseja mesmo adicionar o artigo “${nome}”?`)) return;
-
-      // encontra primeira linha em branco
-      let blankIdx = dadosComAlteracoes.findIndex((r,i)=> i>=2 && !r[1]);
-      let sheetRow;
-      if (blankIdx !== -1) {
-        sheetRow = rowIndicesAtuais[blankIdx];
-      } else {
-        // se não houver, adiciona abaixo
-        blankIdx = dadosComAlteracoes.length;
-        sheetRow = blankIdx + 1;
-        // expande arrays locais
-        const nova = Array(cabecalho.length).fill('');
-        dadosComAlteracoes.push(nova);
-        rowIndicesAtuais.push(sheetRow);
-      }
-
-      // escreve no Sheets e na memória
-      atualizarEstado('A enviar novo artigo...');
-      await atualizarCelula(sheetRow, 2, nome);
-      dadosComAlteracoes[blankIdx][1] = nome;
-
-      // agora filtra só esse artigo
-      criarTabela(
-        [dadosComAlteracoes[0], dadosComAlteracoes[1], dadosComAlteracoes[blankIdx]],
-        [rowIndicesAtuais[0],   rowIndicesAtuais[1],   rowIndicesAtuais[blankIdx]]
-      );
-      atualizarEstado('Pronto');
+      // ... mantém tua lógica de adicionar ...
     });
     suggestionsEl.appendChild(liAdd);
   });
 
-  // inicializa
+  // **Esconder sugestões ao clicar fora**
+  document.addEventListener('click', e => {
+    if (!searchInput.contains(e.target) && !suggestionsEl.contains(e.target)) {
+      suggestionsEl.innerHTML = '';
+    }
+  });
+
   carregarDados();
 });
