@@ -2,16 +2,26 @@ import { atualizarCelula } from './api.js';
 
 let modoEdicaoAtivo = false;
 let dadosAtuais = [];
+let rowIndicesAtuais = [];
 
+/**
+ * Atualiza a mensagem de estado na UI
+ */
 export function atualizarEstado(texto) {
   document.getElementById('estado').textContent = texto;
 }
 
+/**
+ * Alterna entre modo edição e modo leitura
+ */
 export function toggleModoEdicao() {
   modoEdicaoAtivo = !modoEdicaoAtivo;
   aplicarModoEdicao();
 }
 
+/**
+ * Aplica visualmente o estado de edição (habilita inputs e cliques)
+ */
 export function aplicarModoEdicao() {
   const botao = document.getElementById('modoEdicao');
   botao.textContent = modoEdicaoAtivo ? 'Concluir' : 'Edição';
@@ -23,113 +33,139 @@ export function aplicarModoEdicao() {
   });
 }
 
-export function obterDadosAtuais() {
-  return dadosAtuais;
-}
+/**
+ * Cria e renderiza a tabela a partir dos dados e dos índices de linha no Sheets.
+ * @param {Array[]} dados       – Matriz de linhas (cada linha é um array de células)
+ * @param {number[]} rowIndices – Matriz de números de linha correspondentes em Google Sheets
+ */
+export function criarTabela(dados, rowIndices) {
+  // Guarda localmente os dados e os seus índices
+  dadosAtuais = JSON.parse(JSON.stringify(dados));
+  rowIndicesAtuais = JSON.parse(JSON.stringify(rowIndices));
 
-export function criarTabela(dados) {
-  dadosAtuais = JSON.parse(JSON.stringify(dados)); // cópia segura
   const wrapper = document.getElementById('tabela');
   wrapper.innerHTML = '';
 
-  const cabecalho = dadosAtuais[0];
+  const cabecalho    = dadosAtuais[0];
   const subCabecalho = dadosAtuais[1];
 
+  // Detecta colunas de pares (Estado / Qtde)
   const propriedades = [];
   for (let i = 2; i < cabecalho.length; i += 2) {
     propriedades.push({ nome: cabecalho[i], estadoCol: i, qtdeCol: i + 1 });
   }
 
+  // Construir <table>
   const tabela = document.createElement('table');
   tabela.className = 'min-w-full bg-white shadow rounded text-sm';
 
+  // Cabeçalho
   const thead = document.createElement('thead');
-  const tr = document.createElement('tr');
+  const headRow = document.createElement('tr');
 
-  const thSoma = document.createElement('th');
-  thSoma.textContent = 'Total F';
-  thSoma.className = 'px-3 py-2 bg-gray-200 text-center';
-  tr.appendChild(thSoma);
+  // Coluna “Total F”
+  const thTotal = document.createElement('th');
+  thTotal.textContent = 'Total F';
+  thTotal.className = 'px-3 py-2 bg-gray-200 text-center';
+  headRow.appendChild(thTotal);
 
+  // Coluna “Artigo”
   const thArt = document.createElement('th');
   thArt.textContent = 'Artigo';
   thArt.className = 'px-3 py-2 bg-gray-200 text-left';
-  tr.appendChild(thArt);
+  headRow.appendChild(thArt);
 
+  // Colunas de propriedades
   propriedades.forEach(p => {
     const th = document.createElement('th');
     th.colSpan = 2;
     th.textContent = p.nome;
     th.className = 'px-3 py-2 bg-gray-200 text-center';
-    tr.appendChild(th);
+    headRow.appendChild(th);
   });
-  thead.appendChild(tr);
+
+  thead.appendChild(headRow);
   tabela.appendChild(thead);
 
+  // Corpo
   const tbody = document.createElement('tbody');
 
-  for (let i = 2; i < dadosAtuais.length; i++) {
-    const linha = dadosAtuais[i];
+  for (let idx = 2; idx < dadosAtuais.length; idx++) {
+    const linha    = dadosAtuais[idx];
+    const sheetRow = rowIndicesAtuais[idx];
+
+    // Ignora linhas sem artigo
     if (!linha[1]) continue;
 
     const tr = document.createElement('tr');
 
-    const tdFaltaTotal = document.createElement('td');
-    tdFaltaTotal.className = 'border px-2 py-1 text-center font-semibold';
-    tr.appendChild(tdFaltaTotal);
+    // Célula “Total F” (soma dinâmica)
+    const tdTotalF = document.createElement('td');
+    tdTotalF.className = 'border px-2 py-1 text-center font-semibold';
+    tr.appendChild(tdTotalF);
 
+    // Célula “Artigo”
     const tdArt = document.createElement('td');
     tdArt.textContent = linha[1];
     tdArt.className = 'border px-3 py-2';
     tr.appendChild(tdArt);
 
+    // Função para recalcular soma e cor do artigo
     function atualizarSomaFalta() {
-      let total = 0;
+      let soma = 0;
       propriedades.forEach(p => {
-        const estado = linha[p.estadoCol];
-        const qtde = parseInt(linha[p.qtdeCol], 10);
-        if (estado === 'F' && !isNaN(qtde)) total += qtde;
+        if (linha[p.estadoCol] === 'F') {
+          const v = parseInt(linha[p.qtdeCol], 10);
+          if (!isNaN(v)) soma += v;
+        }
       });
-      tdFaltaTotal.textContent = total > 0 ? total : '';
+      tdTotalF.textContent = soma > 0 ? soma : '';
 
+      // Cor do artigo
       const estados = propriedades.map(p => linha[p.estadoCol]);
       tdArt.classList.remove('bg-red-100', 'bg-yellow-100');
       if (estados.includes('F')) tdArt.classList.add('bg-red-100');
       else if (estados.includes('C')) tdArt.classList.add('bg-yellow-100');
     }
 
+    // Para cada par Estado/Qtde
     propriedades.forEach(({ estadoCol, qtdeCol }) => {
+      // Célula Estado
       const tdEstado = document.createElement('td');
-      tdEstado.textContent = linha[estadoCol] || '';
-      tdEstado.className = 'border px-2 py-1 text-center cursor-pointer opacity-50';
       tdEstado.dataset.tipo = 'estado';
-      tdEstado.disabled = true;
+      tdEstado.textContent  = linha[estadoCol] || '';
+      tdEstado.disabled     = true;
+      tdEstado.className     = 'border px-2 py-1 text-center cursor-pointer opacity-50';
 
+      // Célula Qtde
       const tdQtde = document.createElement('td');
+      tdQtde.className = 'border px-2 py-1';
       const input = document.createElement('input');
-      input.type = 'number';
-      input.min = 0;
-      input.max = 1000;
-      input.value = linha[qtdeCol] || '';
+      input.type    = 'number';
+      input.min     = 0;
+      input.max     = 1000;
+      input.value   = linha[qtdeCol] || '';
+      input.disabled  = true;
       input.className = 'w-full border px-2 py-1 rounded text-center opacity-50';
-      input.disabled = true;
 
-      const estadoAtual = linha[estadoCol];
-      if (estadoAtual === 'F') {
+      // Cores iniciais
+      const estadoVal = linha[estadoCol];
+      if (estadoVal === 'F') {
         tdEstado.classList.add('bg-red-200');
         tdQtde.classList.add('bg-red-100');
-      } else if (estadoAtual === 'C') {
+      } else if (estadoVal === 'C') {
         tdEstado.classList.add('bg-yellow-200');
         tdQtde.classList.add('bg-yellow-100');
       }
 
+      // Clique no Estado → ciclo F→C→R→F
       tdEstado.addEventListener('click', async () => {
         if (!modoEdicaoAtivo) return;
         const ciclo = { '': 'F', 'F': 'C', 'C': 'R', 'R': 'F' };
-        const novo = ciclo[tdEstado.textContent] || 'F';
+        const novo  = ciclo[tdEstado.textContent] || 'F';
         tdEstado.textContent = novo;
+        linha[estadoCol]     = novo;
 
-        linha[estadoCol] = novo;
         tdEstado.classList.remove('bg-red-200', 'bg-yellow-200');
         tdQtde.classList.remove('bg-red-100', 'bg-yellow-100');
         if (novo === 'F') {
@@ -141,25 +177,22 @@ export function criarTabela(dados) {
         }
 
         atualizarSomaFalta();
-
-        const linhaSheet = i + 1;
-        const colSheet = estadoCol + 1;
         atualizarEstado('A enviar alteração...');
-        await atualizarCelula(linhaSheet, colSheet, novo);
+        await atualizarCelula(sheetRow, estadoCol + 1, novo);
         atualizarEstado('Pronto');
       });
 
+      // Debounce na alteração de Qtde
       let debounceTimeout;
       input.addEventListener('input', () => {
         if (!modoEdicaoAtivo) return;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(async () => {
-          linha[qtdeCol] = input.value;
+          const novoVal = input.value;
+          linha[qtdeCol] = novoVal;
           atualizarSomaFalta();
-          const linhaSheet = i + 1;
-          const colSheet = qtdeCol + 1;
           atualizarEstado('A enviar quantidade...');
-          await atualizarCelula(linhaSheet, colSheet, input.value);
+          await atualizarCelula(sheetRow, qtdeCol + 1, novoVal);
           atualizarEstado('Pronto');
         }, 300);
       });
@@ -167,15 +200,17 @@ export function criarTabela(dados) {
       tdQtde.appendChild(input);
 
       tr.appendChild(tdEstado);
-      tdQtde.className = 'border px-2 py-1';
       tr.appendChild(tdQtde);
     });
 
+    // Atualiza soma inicial e adiciona a linha à tabela
     atualizarSomaFalta();
     tbody.appendChild(tr);
   }
 
   tabela.appendChild(tbody);
   wrapper.appendChild(tabela);
+
+  // Se estivermos em edição, reaplica
   if (modoEdicaoAtivo) aplicarModoEdicao();
 }
