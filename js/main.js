@@ -34,10 +34,10 @@ function filtrarFaltas() {
 
 function mostrarTudo() {
   atualizarEstado('A mostrar todos os dados...');
-  const dados = obterDadosAtuais();
-  criarTabela(dados);
+  criarTabela(dadosOriginais); // em vez de usar obterDadosAtuais()
   atualizarEstado('Pronto');
 }
+
 
 document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
 document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
