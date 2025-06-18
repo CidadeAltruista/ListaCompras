@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const resposta = await fetch('https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec');
         const json = await resposta.json();
-        dadosOriginais = JSON.parse(JSON.stringify(json.dados)); // cópia profunda
+        dadosOriginais = JSON.parse(JSON.stringify(json.dados)); // clone defensivo
         criarTabela(dadosOriginais);
         atualizarEstado('Pronto');
       } catch (e) {
@@ -42,8 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
       atualizarEstado('Pronto');
     }
 
-    document.getElementById('filtroF').addEventListener('click', filtrarFaltas);
-    document.getElementById('filtroReset').addEventListener('click', mostrarTudo);
+    // **Aqui usamos os IDs que existem no teu HTML:**
+    document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
+    document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
     document.getElementById('modoEdicao').addEventListener('click', toggleModoEdicao);
 
     carregarDados();
