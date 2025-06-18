@@ -2,6 +2,10 @@ import { atualizarCelula } from './api.js';
 
 let modoEdicaoAtivo = false;
 
+export function atualizarEstado(texto) {
+  document.getElementById('estado').textContent = texto;
+}
+
 export function ativarModoEdicao() {
   modoEdicaoAtivo = true;
   document.querySelectorAll('input, td[data-tipo="estado"]').forEach(el => {
@@ -74,7 +78,9 @@ export function criarTabela(dados) {
         tdEstado.textContent = novo;
         const linhaSheet = i + 1;
         const colSheet = estadoCol + 1;
+        atualizarEstado('A enviar alteração...');
         await atualizarCelula(linhaSheet, colSheet, novo);
+        atualizarEstado('Pronto');
       });
 
       tr.appendChild(tdEstado);
@@ -93,7 +99,9 @@ export function criarTabela(dados) {
         if (!modoEdicaoAtivo) return;
         const linhaSheet = i + 1;
         const colSheet = qtdeCol + 1;
+        atualizarEstado('A enviar quantidade...');
         await atualizarCelula(linhaSheet, colSheet, input.value);
+        atualizarEstado('Pronto');
       });
 
       tdQtde.appendChild(input);
