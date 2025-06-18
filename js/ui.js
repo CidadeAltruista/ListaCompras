@@ -66,35 +66,42 @@ export function criarTabela(dados) {
     const tr = document.createElement('tr');
 
     const tdFaltaTotal = document.createElement('td');
-    let somaFalta = 0;
-
-    propriedades.forEach(p => {
-      if (linha[p.estadoCol] === 'F') {
-        const val = parseInt(linha[p.qtdeCol], 10);
-        if (!isNaN(val)) somaFalta += val;
-      }
-    });
-
-    tdFaltaTotal.textContent = somaFalta > 0 ? somaFalta : '';
     tdFaltaTotal.className = 'border px-2 py-1 text-center font-semibold';
     tr.appendChild(tdFaltaTotal);
 
     const tdArt = document.createElement('td');
     tdArt.textContent = linha[1];
     tdArt.className = 'border px-3 py-2';
-    const estadosLinha = propriedades.map(p => linha[p.estadoCol]);
-    if (estadosLinha.includes('F')) tdArt.classList.add('bg-red-100');
-    else if (estadosLinha.includes('C')) tdArt.classList.add('bg-yellow-100');
     tr.appendChild(tdArt);
+
+    const estadosLinha = [];
+
+    function atualizarSomaFalta() {
+      let total = 0;
+      propriedades.forEach(p => {
+        const estado = document.querySelector(`#estado-${i}-${p.estadoCol}`)?.textContent;
+        const qtde = parseInt(document.querySelector(`#qtde-${i}-${p.qtdeCol}`)?.value || '0', 10);
+        if (estado === 'F' && !isNaN(qtde)) total += qtde;
+      });
+      tdFaltaTotal.textContent = total > 0 ? total : '';
+
+      // Atualizar cor do artigo
+      const estados = propriedades.map(p => document.querySelector(`#estado-${i}-${p.estadoCol}`)?.textContent);
+      tdArt.classList.remove('bg-red-100', 'bg-yellow-100');
+      if (estados.includes('F')) tdArt.classList.add('bg-red-100');
+      else if (estados.includes('C')) tdArt.classList.add('bg-yellow-100');
+    }
 
     propriedades.forEach(({ estadoCol, qtdeCol }) => {
       const tdEstado = document.createElement('td');
+      tdEstado.id = `estado-${i}-${estadoCol}`;
       tdEstado.textContent = linha[estadoCol] || '';
       tdEstado.className = 'border px-2 py-1 text-center cursor-pointer opacity-50';
       tdEstado.dataset.tipo = 'estado';
       tdEstado.disabled = true;
 
       const tdQtde = document.createElement('td');
+      tdQtde.id = `qtde-${i}-${qtdeCol}`;
       const input = document.createElement('input');
       input.type = 'number';
       input.min = 0;
@@ -128,6 +135,8 @@ export function criarTabela(dados) {
           tdQtde.classList.add('bg-yellow-100');
         }
 
+        atualizarSomaFalta();
+
         const linhaSheet = i + 1;
         const colSheet = estadoCol + 1;
         atualizarEstado('A enviar alteração...');
@@ -135,13 +144,18 @@ export function criarTabela(dados) {
         atualizarEstado('Pronto');
       });
 
-      input.addEventListener('change', async () => {
+      let debounceTimeout;
+      input.addEventListener('input', () => {
         if (!modoEdicaoAtivo) return;
-        const linhaSheet = i + 1;
-        const colSheet = qtdeCol + 1;
-        atualizarEstado('A enviar quantidade...');
-        await atualizarCelula(linhaSheet, colSheet, input.value);
-        atualizarEstado('Pronto');
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+          atualizarSomaFalta();
+          const linhaSheet = i + 1;
+          const colSheet = qtdeCol + 1;
+          atualizarEstado('A enviar quantidade...');
+          await atualizarCelula(linhaSheet, colSheet, input.value);
+          atualizarEstado('Pronto');
+        }, 300);
       });
 
       tdQtde.appendChild(input);
@@ -151,6 +165,7 @@ export function criarTabela(dados) {
       tr.appendChild(tdQtde);
     });
 
+    atualizarSomaFalta();
     tbody.appendChild(tr);
   }
 
