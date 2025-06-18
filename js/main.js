@@ -1,3 +1,6 @@
+console.log('main.js carregado');
+
+
 import { criarTabela, obterDadosAtuais, atualizarEstado } from './ui.js';
 
 let dadosOriginais = [];
