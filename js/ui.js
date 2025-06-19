@@ -43,7 +43,7 @@ export function criarTabela(dados, rowIndices) {
   wrapper.innerHTML = '';
 
   const [cab, sub] = dadosAtuais;
-  const props = [];
+  let props = [];
   for (let i = 2; i < cab.length; i += 2) {
     props.push({ nome: cab[i], estadoCol: i, qtdeCol: i + 1 });
   }
