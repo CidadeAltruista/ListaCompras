@@ -47,6 +47,11 @@ export function criarTabela(dados, rowIndices) {
   for (let i = 2; i < cab.length; i += 2) {
     props.push({ nome: cab[i], estadoCol: i, qtdeCol: i + 1 });
   }
+  
+  // Se window.PROPS_TO_SHOW estiver definido, limitamos props a essas colunas
+  if (Array.isArray(window.PROPS_TO_SHOW)) {
+    props = props.filter(p => window.PROPS_TO_SHOW.includes(p.nome));
+  }
 
   // Ícones & cores
   const icons      = { F: '❗', C: '✔', R: '✅' };
