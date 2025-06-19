@@ -1,3 +1,41 @@
+// fila de updates para enviar ao Google Sheets
+const updateQueue = [];
+let isProcessingQueue = false;
+
+function enqueueUpdate(sheetRow, sheetCol, value) {
+  return new Promise((resolve, reject) => {
+    updateQueue.push({ sheetRow, sheetCol, value, resolve, reject });
+    processQueue();
+  });
+}
+
+async function processQueue() {
+  if (isProcessingQueue || updateQueue.length === 0) return;
+  isProcessingQueue = true;
+
+  const { sheetRow, sheetCol, value, resolve, reject } = updateQueue.shift();
+  try {
+    await atualizarCelula(sheetRow, sheetCol, value);
+    resolve();
+  } catch (e) {
+    console.error('Update falhou, retry:', sheetRow, sheetCol, value, e);
+    // opcional: re-enfileirar para retry
+    // updateQueue.unshift({ sheetRow, sheetCol, value, resolve, reject });
+    reject(e);
+  } finally {
+    isProcessingQueue = false;
+    processQueue();
+  }
+  
+      if (updateQueue.length === 0 && !isProcessingQueue) {
+      atualizarEstado('Pronto');
+    }
+
+}
+
+
+
+
 import { atualizarCelula } from './api.js';
 
 let modoEdicaoAtivo = false;
@@ -157,7 +195,7 @@ export function criarTabela(dados, rowIndices) {
         tdQ.classList.add(bgQtde[next]);
         updateSumAndArt();
         atualizarEstado('A enviar alteração...');
-        await atualizarCelula(sheetRow, estadoCol+1, next);
+        await enqueueUpdate(sheetRow, estadoCol+1, next);
         atualizarEstado('Pronto');
       });
 
@@ -170,7 +208,7 @@ export function criarTabela(dados, rowIndices) {
           row[qtdeCol]=inp.value;
           updateSumAndArt();
           atualizarEstado('A enviar quantidade...');
-          await atualizarCelula(sheetRow, qtdeCol+1, inp.value);
+          await enqueueUpdate(sheetRow, qtdeCol+1, inp.value);
           atualizarEstado('Pronto');
         },300);
       });
