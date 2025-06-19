@@ -1,7 +1,7 @@
 import { criarTabela, atualizarEstado, toggleModoEdicao } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sheetURL = 'https://script.googleusercontent.com/macros/echo?user_content_key=…';
+  const sheetURL = 'https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec';
 
   let dados = [], rows = [];
 
