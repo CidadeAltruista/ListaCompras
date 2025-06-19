@@ -9,19 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
     return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   }
 
-  async function carregarDados() {
-    atualizarEstado('A carregar dados...');
-    try {
-      const res  = await fetch(sheetURL);
-      const json = await res.json();
-      dados = JSON.parse(JSON.stringify(json.dados));
-      rows = dados.map((_,i)=>i+1);
-      criarTabela(dados, rows);
-      atualizarEstado('Pronto');
-    } catch {
-      atualizarEstado('Erro ao carregar dados.');
-    }
+async function carregarDados() {
+  atualizarEstado('A carregar dados...');
+  try {
+    const res = await fetch(sheetURL);
+    console.log('Status:', res.status); // confirma status 200
+    const texto = await res.text(); // usa texto para diagnóstico
+    console.log('Resposta recebida (texto):', texto); // <-- importantíssimo
+    const json = JSON.parse(texto); // força parsing e mostra erro exato se falhar
+    dados = JSON.parse(JSON.stringify(json.dados));
+    rows = dados.map((_,i)=>i+1);
+    criarTabela(dados, rows);
+    atualizarEstado('Pronto');
+  } catch (e) {
+    console.error('Erro capturado no carregarDados():', e); // <-- importantíssimo
+    atualizarEstado('Erro ao carregar dados.');
   }
+}
+
 
   // Mostra linhas com F ou C
   async function filtrarFaltas() {
