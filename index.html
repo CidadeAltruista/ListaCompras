@@ -33,7 +33,13 @@
       td input[type="number"]::-webkit-inner-spin-button {
         opacity: 1;
       }
-  </style>
+      td[data-tipo="estado"] {
+        border-right: none;
+      }
+      td[data-tipo="estado"] + td {
+        border-left: none;
+      }
+</style>
 </head>
 
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">

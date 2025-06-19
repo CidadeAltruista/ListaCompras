@@ -123,6 +123,11 @@ export function criarTabela(dados, rowIndices) {
       inp.disabled  = true;
       inp.className = 'w-full text-xs text-center border rounded px-1 py-1 opacity-50';
       tdQ.appendChild(inp);
+      
+      // Seleciona todo o texto ao receber foco
+      inp.addEventListener('focus', () => {
+       inp.select();
+      });
 
       // valor inicial
       const init = row[estadoCol] || '';
