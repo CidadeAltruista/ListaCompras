@@ -48,7 +48,7 @@ export function criarTabela(dados, rowIndices) {
 
   // Montar <table>
   const table = document.createElement('table');
-  table.className = 'min-w-full bg-white shadow rounded text-sm';
+  table.className = 'min-w-full bg-white shadow rounded text-sm table-fixed';
 
   // Cabeçalho
   const thead = document.createElement('thead');

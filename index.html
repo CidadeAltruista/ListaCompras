@@ -5,8 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Força layout fixo e separadores */
+    table {
+      table-layout: fixed;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #e5e7eb; /* cinzento suave */
+    }
+
+    /* Coluna Estado (qualquer td com data-tipo="estado") e a coluna Qtde imediatamente seguinte */
+    td[data-tipo="estado"],
+    td[data-tipo="estado"] + td {
+      min-width: 3ch;
+      max-width: 3ch;
+    }
+
+    /* Garantir que os inputs mostraram setas e pelo menos 1 caractere */
+    td input[type="number"] {
+      min-width: 3ch;
+      padding-right: 0.25rem;
+      -moz-appearance: textfield;
+    }
+    td input[type="number"]::-webkit-outer-spin-button,
+    td input[type="number"]::-webkit-inner-spin-button {
+      opacity: 1;
+    }
+
+    /* Ícones ligeiramente mais pequenos */
+    td[data-tipo="estado"] span {
+      font-size: 0.75rem;
+    }
+
+    /* Colunas Total em Falta e Artigo têm texto “nowrap” e elipsis */
+    td:first-child,
+    td:nth-child(2) {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-900 p-4 text-sm">  <!-- text-sm no body para texto menor -->
+
+<body class="bg-gray-100 text-gray-900 p-4 text-sm">
   <h1 class="text-xl font-bold text-center mb-4">Lista de Compras</h1>
 
   <div class="flex flex-wrap justify-center gap-2 mb-4">
@@ -17,7 +60,6 @@
 
   <div id="estado" class="text-center text-xs text-gray-600 mb-4"></div>
 
-  <!-- Pesquisa -->
   <div class="mb-4 relative">
     <input
       id="searchInput"
@@ -31,10 +73,7 @@
     ></ul>
   </div>
 
-  <!-- Tabela -->
-  <div id="tabela" class="overflow-x-auto">
-    <!-- será injetada aqui -->
-  </div>
+  <div id="tabela" class="overflow-x-auto"></div>
 
   <script type="module" src="js/main.js"></script>
 </body>
