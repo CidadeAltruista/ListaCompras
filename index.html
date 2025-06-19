@@ -13,39 +13,26 @@
       border-collapse: collapse;
     }
     th, td {
-      border: 1px solid #e5e7eb; /* cinzento suave */
+      border: 1px solid #4B5563; /* cinzento suave */
     }
 
-    /* Coluna Estado (qualquer td com data-tipo="estado") e a coluna Qtde imediatamente seguinte */
-    td[data-tipo="estado"],
-    td[data-tipo="estado"] + td {
-      min-width: 3ch;
-      max-width: 3ch;
-    }
+      td[data-tipo="estado"] {
+        min-width: 3ch;
+        max-width: 3ch;
+      }
 
-    /* Garantir que os inputs mostraram setas e pelo menos 1 caractere */
-    td input[type="number"] {
-      min-width: 3ch;
-      padding-right: 0.25rem;
-      -moz-appearance: textfield;
-    }
-    td input[type="number"]::-webkit-outer-spin-button,
-    td input[type="number"]::-webkit-inner-spin-button {
-      opacity: 1;
-    }
+      /* A coluna Qtde (“+ td”) e o próprio input têm um min-width maior */
+      td[data-tipo="estado"] + td,
+      td[data-tipo="estado"] + td input {
+        min-width: 4ch;    /* espaço para 1 dígito + setas */
+        max-width: none;   /* deixa expandir se necessário */
+      }
 
-    /* Ícones ligeiramente mais pequenos */
-    td[data-tipo="estado"] span {
-      font-size: 0.75rem;
-    }
-
-    /* Colunas Total em Falta e Artigo têm texto “nowrap” e elipsis */
-    td:first-child,
-    td:nth-child(2) {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      /* Garante que o spinner fica visível */
+      td input[type="number"]::-webkit-outer-spin-button,
+      td input[type="number"]::-webkit-inner-spin-button {
+        opacity: 1;
+      }
   </style>
 </head>
 
