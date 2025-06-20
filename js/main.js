@@ -160,7 +160,7 @@ async function carregarDados() {
 
 
 
-  });
+
   document.addEventListener('click', e=>{
     if(!inp.contains(e.target)&&!sug.contains(e.target)) sug.innerHTML='';
   });
