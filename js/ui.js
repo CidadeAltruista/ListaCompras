@@ -223,13 +223,17 @@ export function criarTabela(dados, rowIndices) {
     tdDel.textContent  = '❌';
     tdDel.disabled     = true;
     tdDel.className    = 'border px-2 py-1 text-center opacity-50 cursor-pointer text-xs';
-    tdDel.addEventListener('click', async()=>{
-      if(!modoEdicaoAtivo) return;
-      atualizarEstado('Eliminando...');
-      await atualizarCelula(sheetRow, 2, ''); // apaga Artigo
-      tr.remove();
-      atualizarEstado('Pronto');
-    });
+
+   tdDel.addEventListener('click', async () => {
+     if (!modoEdicaoAtivo) return;
+     // pergunta antes de apagar
+     if (!confirm(`Eliminar o artigo “${row[1]}”?`)) return;
+     atualizarEstado('Eliminando...');
+     await atualizarCelula(sheetRow, 2, ''); // apaga Artigo
+     tr.remove();
+     atualizarEstado('Pronto');
+   });
+
     tr.appendChild(tdDel);
 
     updateSumAndArt();

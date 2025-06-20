@@ -82,11 +82,89 @@ async function carregarDados() {
       });
       sug.appendChild(li);
     });
-    // opção adicionar omitida por brevidade...
+        // ... código de hits ...
+
+    // ─── A PARTIR DAQUI INSERE O BLOCÃO “➕ Adicionar” ───
+    // Só em modo edição
+    if (document.getElementById('modoEdicao').textContent === 'Concluir') {
+      const nome = inp.value.trim();
+      if (nome) {
+        const liAdd = document.createElement('li');
+        liAdd.textContent = `➕ Adicionar “${nome}”`;
+        liAdd.className = 'px-2 py-1 text-green-600 hover:bg-green-100 cursor-pointer text-xs';
+        liAdd.addEventListener('click', async () => {
+          if (!confirm(`Deseja mesmo adicionar o artigo “${nome}”?`)) return;
+          // encontra 1ª linha em branco
+          let blankIdx = dados.findIndex((r,i) => i >= 2 && !r[1]);
+          if (blankIdx === -1) {
+            blankIdx = dados.length;
+            rows.push(blankIdx+1);
+            dados.push(Array(dados[0].length).fill(''));
+          }
+          const sheetRow = blankIdx + 1;
+          atualizarEstado('A adicionar artigo...');
+          await atualizarCelula(sheetRow, 2, nome);
+          // atualiza localmente
+          dados[blankIdx][1] = nome;
+          // mostra só a nova linha
+          criarTabela(
+            [dados[0], dados[1], dados[blankIdx]],
+            [rows[0], rows[1], rows[blankIdx]]
+          );
+          atualizarEstado('Pronto');
+          inp.value = '';
+          sug.innerHTML = '';
+        });
+        sug.appendChild(liAdd);
+      }
+    }
+    // ─────────────────────────────────────────────────────
+  });
+
+    // ─── A PARTIR DAQUI INSERE O BLOCÃO “➕ Adicionar” ───
+    // Só em modo edição
+    if (document.getElementById('modoEdicao').textContent === 'Concluir') {
+      const nome = inp.value.trim();
+      if (nome) {
+        const liAdd = document.createElement('li');
+        liAdd.textContent = `➕ Adicionar “${nome}”`;
+        liAdd.className = 'px-2 py-1 text-green-600 hover:bg-green-100 cursor-pointer text-xs';
+        liAdd.addEventListener('click', async () => {
+          if (!confirm(`Deseja mesmo adicionar o artigo “${nome}”?`)) return;
+          // encontra 1ª linha em branco
+          let blankIdx = dados.findIndex((r,i) => i >= 2 && !r[1]);
+          if (blankIdx === -1) {
+            blankIdx = dados.length;
+            rows.push(blankIdx+1);
+            dados.push(Array(dados[0].length).fill(''));
+          }
+          const sheetRow = blankIdx + 1;
+          atualizarEstado('A adicionar artigo...');
+          await atualizarCelula(sheetRow, 2, nome);
+          // atualiza localmente
+          dados[blankIdx][1] = nome;
+          // mostra só a nova linha
+          criarTabela(
+            [dados[0], dados[1], dados[blankIdx]],
+            [rows[0], rows[1], rows[blankIdx]]
+          );
+          atualizarEstado('Pronto');
+          inp.value = '';
+          sug.innerHTML = '';
+        });
+        sug.appendChild(liAdd);
+      }
+    }
+    // ─────────────────────────────────────────────────────
+  });
+
+
+
   });
   document.addEventListener('click', e=>{
     if(!inp.contains(e.target)&&!sug.contains(e.target)) sug.innerHTML='';
   });
 
-  carregarDados();
+ // Inicia já filtrado
+ filtrarFaltas();
 });
