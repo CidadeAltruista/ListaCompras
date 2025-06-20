@@ -6,7 +6,7 @@ import {
 import { atualizarCelula } from './api.js';  // 👍 necessário para o “➕ Adicionar”
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sheetURL = 'https://script.google.com/macros/s/AKfycbyVUwW8_…/exec';
+  const sheetURL = 'https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec';
 
   let dados = [], rows = [];
 
