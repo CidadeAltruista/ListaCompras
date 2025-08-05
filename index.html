@@ -6,22 +6,7 @@
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-      /* Fixar as duas primeiras colunas */
-    table th:nth-child(1),
-    table td:nth-child(1) {
-      position: sticky;
-      left: 0;
-      background-color: white; /* ou a cor do teu fundo */
-      z-index: 2;              /* mantém acima das outras células */
-    }
 
-    table th:nth-child(2),
-    table td:nth-child(2) {
-      position: sticky;
-      left: 5rem;              /* ajuste este valor à largura real da 1ª coluna */
-      background-color: white;
-      z-index: 2;
-    }
 
 
   <style>
@@ -57,6 +42,23 @@
       td[data-tipo="estado"] + td {
         border-left: none;
       }
+      
+            /* Fixar as duas primeiras colunas */
+    table th:nth-child(1),
+    table td:nth-child(1) {
+      position: sticky;
+      left: 0;
+      background-color: white; /* ou a cor do teu fundo */
+      z-index: 2;              /* mantém acima das outras células */
+    }
+
+    table th:nth-child(2),
+    table td:nth-child(2) {
+      position: sticky;
+      left: 5rem;              /* ajuste este valor à largura real da 1ª coluna */
+      background-color: white;
+      z-index: 2;
+    }
 </style>
 </head>
 
