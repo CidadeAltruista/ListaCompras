@@ -53,6 +53,42 @@ document.addEventListener('DOMContentLoaded', () => {
     atualizarEstado('A mostrar todos...');
     await carregarDados();
   }
+  
+// após as tuas outras funções de filtro, p.ex. filtrarFaltas()
+
+async function filtrarComprados() {
+  atualizarEstado('A filtrar artigos COMPRADOS…');
+  // Recarrega dados originais
+  await carregarDados();            // garante que `dados` e `rows` estão frescos
+  const filteredData = [dados[0], dados[1]];
+  const filteredRows = [rows[0], rows[1]];
+
+  // percorre cada linha (começando em 2) e verifica se existe 'C' no array dos estados
+  for (let i = 2; i < dados.length; i++) {
+    let comprado = false;
+    // os estados estão nas colunas pares a partir de j=2
+    for (let j = 2; j < dados[i].length; j += 2) {
+      if (dados[i][j] === 'C') {
+        comprado = true;
+        break;
+      }
+    }
+    if (comprado) {
+      filteredData.push(dados[i]);
+      filteredRows.push(rows[i]);
+    }
+  }
+
+  // redesenha a tabela só com os “C”
+  criarTabela(filteredData, filteredRows);
+  atualizarEstado('Pronto');
+}
+
+// liga o botão “Mostrar Comprados”
+document
+  .getElementById('mostrarComprados')
+  .addEventListener('click', filtrarComprados);
+
 
   // Botões
   document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
@@ -130,26 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  async function filtrarComprados() {
-  atualizarEstado('A aplicar filtro de Comprados.');
-  await carregarDados();
-  const c = [dados[0], dados[1]], r = [rows[0], rows[1]];
-  for (let i = 2; i < dados.length; i++) {
-    for (let j = 2; j < dados[i].length; j += 2) {
-      if (dados[i][j] === 'C') {
-        c.push(dados[i]);
-        r.push(rows[i]);
-        break;
-      }
-    }
-  }
-  criarTabela(c, r);
-  atualizarEstado('Pronto');
-}
 
-document
-  .getElementById('mostrarComprados')
-  .addEventListener('click', filtrarComprados);
 
 
   document.addEventListener('click', e => {

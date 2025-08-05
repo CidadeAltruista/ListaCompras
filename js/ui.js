@@ -248,6 +248,7 @@ export function criarTabela(dados, rowIndices) {
 
   table.appendChild(tbody);
   wrapper.appendChild(table);
+  updateStickyOffset();
   
       // Ajusta a variável CSS com a largura real da 1ª célula
     function updateStickyOffset() {
