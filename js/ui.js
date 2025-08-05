@@ -248,6 +248,23 @@ export function criarTabela(dados, rowIndices) {
 
   table.appendChild(tbody);
   wrapper.appendChild(table);
+  
+      // Ajusta a variável CSS com a largura real da 1ª célula
+    function updateStickyOffset() {
+      const tbl = document.querySelector('#tabela table');
+      if (!tbl) return;
+      // Seleciona a 1ª célula (td ou th) da primeira linha
+      const firstCell = tbl.querySelector('tr > *');
+      const w = firstCell.getBoundingClientRect().width + 'px';
+      tbl.style.setProperty('--first-col-width', w);
+    }
+
+    // Dispara logo após renderizar a tabela
+    updateStickyOffset();
+    // E também em resize, para quando mudares o tamanho da janela
+    window.addEventListener('resize', updateStickyOffset);
+
+  
 
   if (modoEdicaoAtivo) aplicarModoEdicao();
 }

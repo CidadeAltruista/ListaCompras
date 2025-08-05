@@ -43,22 +43,30 @@
         border-left: none;
       }
       
-            /* Fixar as duas primeiras colunas */
-    table th:nth-child(1),
-    table td:nth-child(1) {
-      position: sticky;
-      left: 0;
-      background-color: white; /* ou a cor do teu fundo */
-      z-index: 2;              /* mantém acima das outras células */
+    /* 1) Criar variáveis para o offset dinâmico */
+    table {
+      /* Valor inicial; será sobrescrito por JS */
+      --first-col-width: 0px;
     }
 
-    table th:nth-child(2),
-    table td:nth-child(2) {
+    /* 2) Sticky para 1ª coluna (“Total em Falta”) */
+    th:nth-child(1),
+    td:nth-child(1) {
       position: sticky;
-      left: 5rem;              /* ajuste este valor à largura real da 1ª coluna */
+      left: 0;
       background-color: white;
-      z-index: 2;
+      z-index: 3; /* acima de tudo */
     }
+
+    /* 3) Sticky para 2ª coluna (“Artigo”), usando o offset calculado */
+    th:nth-child(2),
+    td:nth-child(2) {
+      position: sticky;
+      left: var(--first-col-width);
+      background-color: white;
+      z-index: 2; /* abaixo da 1ª coluna, mas acima das demais */
+    }
+
 </style>
 </head>
 
