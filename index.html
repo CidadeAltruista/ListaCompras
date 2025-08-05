@@ -10,38 +10,28 @@
     table {
       table-layout: fixed;
       border-collapse: collapse;
-      /* Valor inicial; será sobrescrito por JS */
-      --first-col-width: 0px;
+      --first-col-width: 0px; /* será atualizado por JS */
     }
     th, td {
       border: 1px solid #4B5563; /* cinzento suave */
     }
-
     td[data-tipo="estado"] {
       min-width: 3ch;
       max-width: 3ch;
     }
-
-    /* A coluna Qtde (“+ td”) e o próprio input têm um min-width maior */
     td[data-tipo="estado"] + td,
     td[data-tipo="estado"] + td input {
-      min-width: 4ch;    /* espaço para 1 dígito + setas */
-      max-width: none;   /* deixa expandir se necessário */
+      min-width: 4ch;
+      max-width: none;
     }
-
-    /* Garante que o spinner fica visível */
     td input[type="number"]::-webkit-outer-spin-button,
     td input[type="number"]::-webkit-inner-spin-button {
       opacity: 1;
     }
-    td[data-tipo="estado"] {
-      border-right: none;
-    }
-    td[data-tipo="estado"] + td {
-      border-left: none;
-    }
+    td[data-tipo="estado"] { border-right: none; }
+    td[data-tipo="estado"] + td { border-left: none; }
 
-    /* Sticky para 1ª coluna (“Total em Falta”) */
+    /* Sticky 1ª coluna (“Total em Falta”) */
     th:nth-child(1),
     td:nth-child(1) {
       position: sticky;
@@ -49,8 +39,7 @@
       background-color: white;
       z-index: 2;
     }
-
-    /* Sticky para 2ª coluna (“Artigo”) */
+    /* Sticky 2ª coluna (“Artigo”) */
     th:nth-child(2),
     td:nth-child(2) {
       position: sticky;
@@ -61,17 +50,19 @@
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">
-  <h1 class="text-xl font-bold text-center mb-4">Lista de Compras - Catarina</h1>
+  <h1 class="text-xl font-bold text-center mb-4">Lista de Compras — Catarina</h1>
 
   <div class="flex flex-wrap justify-center gap-2 mb-4">
-    <button id="modoEdicao" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Edição</button>
-    <button id="mostrarFaltas" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Mostrar Em Falta</button>
-    <button id="mostrarTudo" class="bg-gray-600 text-white px-3 py-1 rounded text-xs">Mostrar Tudo</button>
+    <button id="modoEdicao"    class="bg-green-600 text-white px-3 py-1 rounded text-xs">Edição</button>
+    <button id="mostrarFaltas" class="bg-blue-500  text-white px-3 py-1 rounded text-xs">Mostrar Em Falta</button>
+    <button id="mostrarTudo"   class="bg-gray-600  text-white px-3 py-1 rounded text-xs">Mostrar Tudo</button>
+    <button id="mostrarComprados" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs">
+      Mostrar Comprados
+    </button>
   </div>
 
   <div id="estado" class="text-center text-xs text-gray-600 mb-4"></div>
 
-  <!-- pesquisa igual -->
   <div class="mb-4 relative">
     <input id="searchInput" type="text" placeholder="Pesquisar artigo…"
       class="w-full md:w-1/2 border rounded px-2 py-1 text-xs focus:outline-none focus:ring"/>
@@ -81,10 +72,23 @@
 
   <div id="tabela" class="overflow-x-auto"></div>
 
-  <!-- define global para mostrar só “Santa Catarina” -->
   <script>
+    /* Limita propriedades visíveis */
     window.PROPS_TO_SHOW = ['Jardim','Francos','424','Santa Catarina'];
+
+    /* Atualiza --first-col-width com a largura da 1ª célula */
+    function updateStickyOffset() {
+      const tbl = document.querySelector('#tabela table');
+      if (!tbl) return;
+      const firstCell = tbl.querySelector('tr > *');
+      tbl.style.setProperty('--first-col-width',
+        firstCell.getBoundingClientRect().width + 'px'
+      );
+    }
+    window.addEventListener('resize', updateStickyOffset);
+    // será chamado no final de ui.js, após renderizar a tabela
   </script>
+
   <script type="module" src="/ListaCompras/js/main.js"></script>
 </body>
 </html>

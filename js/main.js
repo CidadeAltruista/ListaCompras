@@ -129,6 +129,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+  
+  async function filtrarComprados() {
+  atualizarEstado('A aplicar filtro de Comprados.');
+  await carregarDados();
+  const c = [dados[0], dados[1]], r = [rows[0], rows[1]];
+  for (let i = 2; i < dados.length; i++) {
+    for (let j = 2; j < dados[i].length; j += 2) {
+      if (dados[i][j] === 'C') {
+        c.push(dados[i]);
+        r.push(rows[i]);
+        break;
+      }
+    }
+  }
+  criarTabela(c, r);
+  atualizarEstado('Pronto');
+}
+
+document
+  .getElementById('mostrarComprados')
+  .addEventListener('click', filtrarComprados);
+
 
   document.addEventListener('click', e => {
     if (!inp.contains(e.target) && !sug.contains(e.target)) {
