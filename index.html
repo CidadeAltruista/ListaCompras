@@ -48,15 +48,14 @@
       z-index: 3;
     }
     
-        /* Sticky header: fixa a linha de títulos no topo */
-    thead th {
+    /* fixa a linha de cabeçalho no topo ao scrollar verticalmente */
+    #tabela table thead th {
       position: sticky;
-      top: 0;                    /* gruda ao topo */
-      background-color: white;   /* garante fundo sólido por cima das linhas */
-      z-index: 1;                /* acima dos <td> normais;  
-                                    as tuas regras de th:nth-child(1/2) têm z-index maiores e
-                                    continuarão a sobrepor-se corretamente */
+      top: 0;                    /* cola ao topo da viewport */
+      z-index: 4;                /* acima das colunas “sticky” (que usam z-index 2 e 3) */
+      background-color: #E5E7EB; /* corresponde ao bg-gray-200 do Tailwind */
     }
+
 
   </style>
 </head>
