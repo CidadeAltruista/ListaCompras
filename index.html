@@ -25,8 +25,8 @@
     }
     td[data-tipo="estado"] + td,
     td[data-tipo="estado"] + td input {
-      min-width: 6ch;  /* aumenta para 6ch ou mais conforme preferires */
-      width: 6ch;
+      min-width: 8ch;  /* aumenta para 6ch ou mais conforme preferires */
+      width: 5ch;
       max-width: none;
       /* podes ajustar aqui se quiseres mais espaço */
     }
@@ -102,7 +102,7 @@
     /* 1ª coluna: só o suficiente para “Total” (5 caracteres) */
     #tabela th:nth-child(1),
     #tabela td:nth-child(1) {
-      width: 5ch;              /* cada “ch” ~ largura do “0”, logo 5ch cobre “Total” */
+      width: 0.8ch;              /* cada “ch” ~ largura do “0”, logo 5ch cobre “Total” */
       max-width: 5ch;
       white-space: normal;     /* mantém “Total” numa só linha */
     }
@@ -110,14 +110,14 @@
     /* 2ª coluna: mais apertada */
     #tabela th:nth-child(2),
     #tabela td:nth-child(2) {
-      width: 18ch;              /* ajusta entre 6ch–10ch conforme o teu conteúdo */
-      max-width: 18ch;
+      width: 17ch;              /* ajusta entre 6ch–10ch conforme o teu conteúdo */
+      max-width: 17ch;
     }
 
     /* 3ª coluna em diante: mais estreitas e títulos podem quebrar linha */
     #tabela th:nth-child(n+3),
     #tabela td:nth-child(n+3) {
-      width: 5ch;           /* ajusta conforme necessário, p.ex. 6ch–8ch */
+      width: 3ch;           /* ajusta conforme necessário, p.ex. 6ch–8ch */
       max-width: 8ch;
       white-space: normal;  /* permite quebra de linha */
       word-break: break-word;
