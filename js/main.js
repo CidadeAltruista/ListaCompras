@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Erro no carregarDados():', e);
       atualizarEstado('Erro ao carregar dados.');
     }
+    window.TODAS_CATEGORIAS = [...new Set(dados.slice(2).map(row => row[0]).filter(Boolean))];
   }
 
   async function filtrarFaltas() {

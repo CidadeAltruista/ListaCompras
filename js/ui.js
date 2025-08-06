@@ -42,6 +42,8 @@ export function criarTabela(dados, rowIndices) {
   dadosAtuais      = JSON.parse(JSON.stringify(dados));
   rowIndicesAtuais = JSON.parse(JSON.stringify(rowIndices));
 
+  const categoriasUnicas = window.TODAS_CATEGORIAS || [];
+
   const wrapper = document.getElementById('tabela');
   wrapper.innerHTML = '';
 
@@ -85,10 +87,24 @@ export function criarTabela(dados, rowIndices) {
 
   // Corpo
   const tbody = document.createElement('tbody');
+  let lastCategoria = null;
   dadosAtuais.forEach((row, idx) => {
-    if (idx<2 || !row[1]) return;
+    if (idx < 2 || !row[1]) return;
+    const categoria = row[0] || '';
+    // Se mudou de categoria, insere linha de categoria
+    if (categoria !== lastCategoria) {
+      lastCategoria = categoria;
+      const trCat = document.createElement('tr');
+      trCat.className = 'categoria'; // <-- aqui!
+      const tdCat = document.createElement('td');
+      tdCat.colSpan = props.length * 2 + 2; // ou o valor correto para o teu caso
+      tdCat.textContent = categoria;
+      trCat.appendChild(tdCat);
+      tbody.appendChild(trCat);
+    }
+
     const sheetRow = rowIndicesAtuais[idx];
-    const tr       = document.createElement('tr');
+    const tr = document.createElement('tr');
 
     // Total em Falta
     const tdSum = document.createElement('td');
@@ -139,32 +155,115 @@ export function criarTabela(dados, rowIndices) {
     // Edição inline do Artigo
     function enterEditMode() {
       if (!modoEdicaoAtivo) return;
-      const input = document.createElement('input');
-      input.type  = 'text';
-      input.value = spanText.textContent;
-      input.className = 'w-full text-xs border rounded px-1 py-0.5';
-      spanText.replaceWith(input);
+
+      // Input para o nome do artigo
+      const inputArtigo = document.createElement('input');
+      inputArtigo.type  = 'text';
+      inputArtigo.value = spanText.textContent;
+      inputArtigo.className = 'w-full text-xs border rounded px-1 py-0.5 mb-1';
+
+      // Select para categoria existente
+      const selectCat = document.createElement('select');
+      selectCat.className = 'w-full text-xs border rounded px-1 py-0.5 mb-1';
+
+      // Adiciona todas as categorias únicas
+      categoriasUnicas.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === row[0]) opt.selected = true;
+        selectCat.appendChild(opt);
+      });
+
+      // Adiciona a opção "Adicionar Nova"
+      const optNova = document.createElement('option');
+      optNova.value = '__nova__';
+      optNova.textContent = '➕ Adicionar Nova';
+      selectCat.appendChild(optNova);
+
+      // Se a categoria atual não está na lista, adiciona-a e seleciona
+      if (row[0] && !categoriasUnicas.includes(row[0])) {
+        const opt = document.createElement('option');
+        opt.value = row[0];
+        opt.textContent = row[0];
+        opt.selected = true;
+        selectCat.insertBefore(opt, selectCat.firstChild);
+      }
+
+      // Quando escolhe "Adicionar Nova", pede ao utilizador a nova categoria
+      selectCat.addEventListener('change', () => {
+        if (selectCat.value === '__nova__') {
+          const nova = prompt('Nova categoria:');
+          if (nova && !categoriasUnicas.includes(nova)) {
+            // Adiciona ao dropdown e seleciona
+            const opt = document.createElement('option');
+            opt.value = nova;
+            opt.textContent = nova;
+            opt.selected = true;
+            selectCat.insertBefore(opt, optNova);
+            selectCat.value = nova;
+          } else if (nova) {
+            selectCat.value = nova;
+          } else {
+            // Se cancelar, volta à anterior
+            selectCat.selectedIndex = 0;
+          }
+        }
+      });
+
+      // Container para inputs
+      const container = document.createElement('div');
+      container.appendChild(inputArtigo);
+      container.appendChild(selectCat);
+
+      spanText.replaceWith(container);
       pencil.style.opacity = '0';
-      input.focus();
+      inputArtigo.focus();
 
       function finishEdit() {
-        const novo = input.value.trim();
-        input.replaceWith(spanText);
-        spanText.textContent = novo;
-        pencil.style.opacity = modoEdicaoAtivo?'1':'0';
-        if (novo !== row[1]) {
-          row[1] = novo;
+        const categoriaFinal = selectCat.value;
+        const novoArtigo = inputArtigo.value.trim();
+        container.replaceWith(spanText);
+        spanText.textContent = novoArtigo;
+        pencil.style.opacity = modoEdicaoAtivo ? '1' : '0';
+
+        // Só envia se mudou
+        let mudou = false;
+        if (novoArtigo !== row[1]) {
+          row[1] = novoArtigo;
+          mudou = true;
           atualizarEstado('A enviar artigo...');
-          atualizarCelula(sheetRow, 2, novo)
+          atualizarCelula(sheetRow, 2, novoArtigo)
             .then(()=> atualizarEstado('Pronto'))
             .catch(()=> atualizarEstado('Erro ao enviar artigo'));
         }
+        if (categoriaFinal !== row[0]) {
+          row[0] = categoriaFinal;
+          mudou = true;
+          atualizarEstado('A enviar categoria...');
+          atualizarCelula(sheetRow, 1, categoriaFinal)
+            .then(()=> atualizarEstado('Pronto'))
+            .catch(()=> atualizarEstado('Erro ao enviar categoria'));
+        }
       }
-      input.addEventListener('blur', finishEdit);
-      input.addEventListener('keydown', e => {
+
+      // Sai do modo de edição ao perder o foco de ambos os campos
+      container.addEventListener('focusout', (e) => {
+        setTimeout(() => {
+          if (!container.contains(document.activeElement)) finishEdit();
+        }, 0);
+      });
+
+      inputArtigo.addEventListener('keydown', e => {
         if (e.key==='Enter') {
           e.preventDefault();
-          input.blur();
+          inputArtigo.blur();
+        }
+      });
+      selectCat.addEventListener('keydown', e => {
+        if (e.key==='Enter') {
+          e.preventDefault();
+          selectCat.blur();
         }
       });
     }
@@ -273,3 +372,5 @@ export function criarTabela(dados, rowIndices) {
 
   if (modoEdicaoAtivo) aplicarModoEdicao();
 }
+
+
