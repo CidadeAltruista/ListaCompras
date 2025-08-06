@@ -19,21 +19,29 @@
       min-width: 1em;   /* ou 2ch, ou 24px, conforme o tamanho do ícone */
       max-width: 1em;
       width: 1em;
-      padding-left: 0em;
-      padding-right: 0em;
+      padding-left: 0;
+      padding-right: 0;
       text-align: center;
     }
     td[data-tipo="estado"] + td,
     td[data-tipo="estado"] + td input {
-      min-width: 8ch;  /* aumenta para 6ch ou mais conforme preferires */
+      min-width: 5ch;  /* aumenta para 6ch ou mais conforme preferires */
       width: 5ch;
       max-width: none;
+      padding-left: 0;
+      padding-right: 0;
       /* podes ajustar aqui se quiseres mais espaço */
     }
     td input[type="number"]::-webkit-outer-spin-button,
     td input[type="number"]::-webkit-inner-spin-button {
-      opacity: 1;
+      -webkit-appearance: none;
+      margin: 0;
     }
+
+    td input[type="number"] {
+      -moz-appearance: textfield; /* Firefox */
+    }
+
     td[data-tipo="estado"] { border-right: none; }
     td[data-tipo="estado"] + td { border-left: none; }
 
@@ -117,7 +125,7 @@
     /* 3ª coluna em diante: mais estreitas e títulos podem quebrar linha */
     #tabela th:nth-child(n+3),
     #tabela td:nth-child(n+3) {
-      width: 3ch;           /* ajusta conforme necessário, p.ex. 6ch–8ch */
+      width: 4ch;           /* ajusta conforme necessário, p.ex. 6ch–8ch */
       max-width: 8ch;
       white-space: normal;  /* permite quebra de linha */
       word-break: break-word;
