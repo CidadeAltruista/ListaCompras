@@ -68,7 +68,7 @@ export function criarTabela(dados, rowIndices) {
   // Cabeçalho
   const thead = document.createElement('thead');
   const hr    = document.createElement('tr');
-  ['Total em Falta','Artigo', ...props.map(p=>p.nome),''].forEach((txt,idx) => {
+  ['#','Artigo', ...props.map(p=>p.nome),''].forEach((txt,idx) => {
     const th = document.createElement('th');
     th.textContent = txt;
     th.colSpan    = idx<2 ? 1 : (idx<props.length+2 ? 2 : 1);
