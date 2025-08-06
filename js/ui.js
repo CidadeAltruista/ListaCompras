@@ -74,6 +74,10 @@ export function criarTabela(dados, rowIndices) {
     th.colSpan    = idx<2 ? 1 : (idx<props.length+2 ? 2 : 1);
     th.className  = 'px-2 py-1 bg-gray-200 text-center text-xs';
     if(idx===1) th.classList.replace('text-center','text-left');
+    // Adiciona data-tipo="estado" aos <th> das colunas de estado
+    if (idx >= 2 && idx < props.length + 2 && (idx - 2) % 2 === 0) {
+      th.setAttribute('data-tipo', 'estado');
+    }
     hr.appendChild(th);
   });
   thead.appendChild(hr);
