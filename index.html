@@ -79,6 +79,28 @@
     #tabela thead th:nth-child(2) {
       z-index: 7;
     }
+    
+    /* 1) Layout fixo para respeitar max-width */
+    #tabela {
+      table-layout: fixed;
+    }
+
+    /* 2) Wrap e quebra de palavras nas células */
+    #tabela th,
+    #tabela td {
+      white-space: normal;       /* permite múltiplas linhas */
+      word-break: break-word;    /* quebra palavras longas */
+      padding: 0.5rem;           /* ajusta o padding se quiseres */
+    }
+
+    /* 3) Limita a largura máxima das colunas (ajusta conforme precisares) */
+    #tabela th,
+    #tabela td {
+      max-width: 8rem;           /* ex.: 8rem (~128px) */
+    }
+
+    
+    
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">
