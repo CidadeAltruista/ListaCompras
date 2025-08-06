@@ -6,14 +6,14 @@
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Força layout fixo e separadores */
+    /* === Estilos originais (layout fixo, bordas, inputs, colunas sticky) === */
     table {
       table-layout: fixed;
       border-collapse: collapse;
       --first-col-width: 0px; /* será atualizado por JS */
     }
     th, td {
-      border: 1px solid #4B5563; /* cinzento suave */
+      border: 1px solid #4B5563;
     }
     td[data-tipo="estado"] {
       min-width: 3ch;
@@ -47,16 +47,38 @@
       background-color: white;
       z-index: 3;
     }
-    
-    /* fixa a linha de cabeçalho no topo ao scrollar verticalmente */
-    #tabela table thead th {
-      position: sticky;
-      top: 0;                    /* cola ao topo da viewport */
-      z-index: 4;                /* acima das colunas “sticky” (que usam z-index 2 e 3) */
-      background-color: #E5E7EB; /* corresponde ao bg-gray-200 do Tailwind */
+
+    /* === Novos estilos para scroll e sticky header === */
+    /* 1) Container com scroll vertical e horizontal */
+    #tabela-container {
+      max-height: 500px;     /* ajuste conforme necessário */
+      overflow: auto;
     }
-
-
+    /* 2) Garante bordas separadas e largura para scroll horizontal */
+    #tabela {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: max-content;
+    }
+    /* 3) Cabeçalho sticky (linha toda) */
+    #tabela thead th {
+      position: sticky;
+      top: 0;
+      background-color: #F3F4F6; /* Tailwind’s bg-gray-200 */
+      z-index: 5;                /* abaixo das colunas 1 e 2 */
+    }
+    /* 4) Eleva as colunas 1 e 2 acima do conteúdo, mas abaixo do thead geral */
+    #tabela th:nth-child(1),
+    #tabela td:nth-child(1),
+    #tabela th:nth-child(2),
+    #tabela td:nth-child(2) {
+      z-index: 6;
+    }
+    /* 5) Cabeçalhos próprios das colunas 1 e 2 acima de tudo */
+    #tabela thead th:nth-child(1),
+    #tabela thead th:nth-child(2) {
+      z-index: 7;
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">
@@ -80,12 +102,12 @@
       class="absolute bg-white border rounded mt-1 max-h-40 overflow-auto shadow w-full md:w-1/2 z-10 text-xs"></ul>
   </div>
 
-  <div id="tabela" class="overflow-x-auto"></div>
+  <!-- Container que dá scroll à tabela inteira -->
+  <div id="tabela-container">
+    <div id="tabela"></div>
+  </div>
 
   <script>
-    /* Limita propriedades visíveis */
-    //window.PROPS_TO_SHOW = ['Jardim','Francos','424','Santa Catarina'];
-
     /* Atualiza --first-col-width com a largura da 1ª célula */
     function updateStickyOffset() {
       const tbl = document.querySelector('#tabela table');
@@ -96,7 +118,7 @@
       );
     }
     window.addEventListener('resize', updateStickyOffset);
-    // será chamado no final de ui.js, após renderizar a tabela
+    // chamado no final de ui.js, após renderizar a tabela :contentReference[oaicite:1]{index=1}
   </script>
 
   <script type="module" src="/ListaCompras/js/main.js"></script>
