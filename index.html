@@ -47,6 +47,17 @@
       background-color: white;
       z-index: 3;
     }
+    
+        /* Sticky header: fixa a linha de títulos no topo */
+    thead th {
+      position: sticky;
+      top: 0;                    /* gruda ao topo */
+      background-color: white;   /* garante fundo sólido por cima das linhas */
+      z-index: 1;                /* acima dos <td> normais;  
+                                    as tuas regras de th:nth-child(1/2) têm z-index maiores e
+                                    continuarão a sobrepor-se corretamente */
+    }
+
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">
