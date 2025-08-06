@@ -80,24 +80,34 @@
       z-index: 7;
     }
     
-    /* 1) Layout fixo para respeitar max-width */
+    /* 1) Garante layout fixo para respeitar widths */
     #tabela {
       table-layout: fixed;
     }
 
-    /* 2) Wrap e quebra de palavras nas células */
+    /* 2) Força wrap de texto como antes */
     #tabela th,
     #tabela td {
-      white-space: normal;       /* permite múltiplas linhas */
-      word-break: break-word;    /* quebra palavras longas */
-      padding: 0.5rem;           /* ajusta o padding se quiseres */
+      white-space: normal;
+      word-break: break-word;
     }
 
-    /* 3) Limita a largura máxima das colunas (ajusta conforme precisares) */
-    #tabela th,
-    #tabela td {
-      max-width: 8rem;           /* ex.: 8rem (~128px) */
+    /* 3) Larguras específicas para colunas 1 e 2 */
+    /* 1ª coluna: só o suficiente para “Total” (5 caracteres) */
+    #tabela th:nth-child(1),
+    #tabela td:nth-child(1) {
+      width: 5ch;              /* cada “ch” ~ largura do “0”, logo 5ch cobre “Total” */
+      max-width: 5ch;
+      white-space: nowrap;     /* mantém “Total” numa só linha */
     }
+
+    /* 2ª coluna: mais apertada */
+    #tabela th:nth-child(2),
+    #tabela td:nth-child(2) {
+      width: 8ch;              /* ajusta entre 6ch–10ch conforme o teu conteúdo */
+      max-width: 8ch;
+    }
+
 
     
     
