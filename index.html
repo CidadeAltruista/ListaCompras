@@ -16,13 +16,19 @@
       border: 1px solid #4B5563;
     }
     td[data-tipo="estado"] {
-      min-width: 3ch;
-      max-width: 3ch;
+      min-width: 1em;   /* ou 2ch, ou 24px, conforme o tamanho do ícone */
+      max-width: 1em;
+      width: 1em;
+      padding-left: 0em;
+      padding-right: 0em;
+      text-align: center;
     }
     td[data-tipo="estado"] + td,
     td[data-tipo="estado"] + td input {
-      min-width: 4ch;
+      min-width: 6ch;  /* aumenta para 6ch ou mais conforme preferires */
+      width: 6ch;
       max-width: none;
+      /* podes ajustar aqui se quiseres mais espaço */
     }
     td input[type="number"]::-webkit-outer-spin-button,
     td input[type="number"]::-webkit-inner-spin-button {
@@ -117,8 +123,17 @@
       word-break: break-word;
       text-align: center;   /* opcional: centraliza o conteúdo */
     }
-    
-    
+
+    /* Força a largura da célula do ícone e do cabeçalho correspondente */
+    td[data-tipo="estado"],
+    th[data-tipo="estado"] {
+      width: 1.5em;
+      min-width: 1.5em;
+      max-width: 1.5em;
+      padding-left: 0;
+      padding-right: 0;
+      text-align: center;
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">
