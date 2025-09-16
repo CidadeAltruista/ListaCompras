@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, minimum-scale=0.25">
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -72,7 +72,7 @@
     #tabela {
       border-collapse: separate;
       border-spacing: 0;
-      min-width: 800px;
+      min-width: 600px;
       width: max-content;
     }
     /* 3) Cabeçalho sticky (linha toda) */
@@ -133,7 +133,7 @@
     #tabela th:nth-child(n+3),
     #tabela td:nth-child(n+3) {
       width: 4ch;           /* ajusta conforme necessário, p.ex. 6ch–8ch */
-      max-width: 8ch;
+      max-width: 6ch;
       white-space: normal;  /* permite quebra de linha */
       word-break: break-word;
       text-align: center;   /* opcional: centraliza o conteúdo */
