@@ -65,13 +65,14 @@
     /* === Novos estilos para scroll e sticky header === */
     /* 1) Container com scroll vertical e horizontal */
     #tabela-container {
-      max-height: 500px;     /* ajuste conforme necessário */
+      max-height: 1000px;     /* ajuste conforme necessário */
       overflow: auto;
     }
     /* 2) Garante bordas separadas e largura para scroll horizontal */
     #tabela {
       border-collapse: separate;
       border-spacing: 0;
+      min-width: 800px;
       width: max-content;
     }
     /* 3) Cabeçalho sticky (linha toda) */
@@ -108,14 +109,18 @@
     }
 
     /* 3) Larguras específicas para colunas 1 e 2 */
-    /* 1ª coluna: só o suficiente para “Total” (5 caracteres) */
+    /* 1ª coluna com largura fixa e estreita */
     #tabela th:nth-child(1),
     #tabela td:nth-child(1) {
-      white-space: nowrap;    /* impede quebra em duas linhas */
-      width: auto;            /* deixa o browser ajustar à largura do conteúdo */
-      min-width: 5ch;         /* mínima aceitável para "Total" */
-      max-width: 30ch;        /* evita ocupar largura excessiva */
+      white-space: nowrap;
+      width: 6ch;
+      min-width: 6ch;
+      max-width: 6ch;
+      overflow: hidden;          /* opcional */
+      text-overflow: ellipsis;   /* opcional */
+      box-sizing: border-box;    /* inclui a borda no cálculo da largura */
     }
+
 
     /* 2ª coluna: mais apertada */
     #tabela th:nth-child(2),
