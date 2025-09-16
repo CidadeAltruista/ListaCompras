@@ -94,7 +94,11 @@ document
   // Botões
   document.getElementById('mostrarFaltas').addEventListener('click', filtrarFaltas);
   document.getElementById('mostrarTudo').addEventListener('click', mostrarTudo);
-  document.getElementById('modoEdicao').addEventListener('click', toggleModoEdicao);
+  document.getElementById('modoEdicao').addEventListener('click', () => {
+    toggleModoEdicao();                          // faz o que já fazia
+    document.body.classList.toggle('modo-edicao'); // marca o <body> para o CSS mostrar/ocultar a coluna X
+  });
+
 
   // Pesquisa
   const inp = document.getElementById('searchInput');
@@ -133,7 +137,7 @@ document
       });
 
     // 2) opção “➕ Adicionar” (só em modo edição)
-    if (document.getElementById('modoEdicao').textContent === 'Concluir') {
+    if (document.body.classList.contains('modo-edicao')) {
       const nome = inp.value.trim();
       if (nome) {
         const liAdd = document.createElement('li');
