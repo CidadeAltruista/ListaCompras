@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dados = JSON.parse(JSON.stringify(json.dados));
       rows  = dados.map((_,i) => i+1);
       criarTabela(dados, rows);
+      updateStickyOffset();
       atualizarEstado('Pronto');
     } catch (e) {
       console.error('Erro no carregarDados():', e);
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     criarTabela(c, r);
+    updateStickyOffset();
     atualizarEstado('Pronto');
   }
 
@@ -82,6 +84,7 @@ async function filtrarComprados() {
 
   // redesenha a tabela só com os “C”
   criarTabela(filteredData, filteredRows);
+  updateStickyOffset();
   atualizarEstado('Pronto');
 }
 
@@ -130,6 +133,7 @@ document
             [dados[0], dados[1], dados[h.i]],
             [rows[0], rows[1], rows[h.i]]
           );
+          updateStickyOffset();
           sug.innerHTML = '';
           inp.value     = '';
         });
@@ -162,6 +166,7 @@ document
             [dados[0], dados[1], dados[blankIdx]],
             [rows[0], rows[1], rows[blankIdx]]
           );
+          updateStickyOffset();
           atualizarEstado('Pronto');
           inp.value     = '';
           sug.innerHTML = '';

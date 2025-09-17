@@ -57,9 +57,10 @@
     th:nth-child(2),
     td:nth-child(2) {
       position: sticky;
-      left: calc(var(--first-col-width) + 1px);
+      left: 4ch;
       background-color: white;
       z-index: 3;
+      background-clip: padding-box;
     }
 
     /* === Novos estilos para scroll e sticky header === */
@@ -84,12 +85,17 @@
     }
 
     /* 4) Eleva as colunas 1 e 2 acima do conteúdo, mas abaixo do thead geral */
+    /* 4) Coluna 1 acima da 2 para nunca ser coberta */
     #tabela th:nth-child(1),
-    #tabela td:nth-child(1),
+    #tabela td:nth-child(1) {
+      z-index: 46;   /* > que a 2.ª e < que o thead (60) */
+    }
+
     #tabela th:nth-child(2),
     #tabela td:nth-child(2) {
-      z-index: 40;
+      z-index: 45;
     }
+
     /* 5) Cabeçalhos próprios das colunas 1 e 2 acima de tudo */
     #tabela thead th:nth-child(1),
     #tabela thead th:nth-child(2) {
@@ -228,41 +234,108 @@
       to   { width: var(--estado-ch, 0ch); }
     }
 
-  /* MOBILE: tornar a tabela mais larga e com scroll lateral */
-  @media (max-width: 640px) {
-    /* o wrapper da tabela fica mais largo que o viewport */
-    #tabela {
-      min-width: 1400px;      /* ↑ ajusta: 1200–1800px conforme precisares */
-      width: max-content;     /* mantém a largura real do conteúdo */
-    }
-
-    /* permite arrastar lateralmente no telemóvel */
-    #tabela-container {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch; /* inércia no iOS */
-    }
-
-    /* alarga as colunas no mobile (opcional, mas ajuda) */
-    #tabela th:nth-child(2),
-    #tabela td:nth-child(2) {             /* Artigo */
-      width: 24ch;
-      max-width: 24ch;
-    }
-
-    #tabela th:nth-child(n+3),
-    #tabela td:nth-child(n+3) {           /* propriedades (a partir da 3ª coluna) */
-      width: 6ch;
-      max-width: 6ch;
-    }
-
-    /* se usas o par estado+quantidade com data-tipo, sobrepõe a largura da quantidade */
-    #tabela thead th[data-tipo="estado"] + th,
-    #tabela td[data-tipo="estado"] + td {
-      width: 8ch !important;
-      min-width: 8ch !important;
-      max-width: 8ch !important;
-    }
+  /* MOBILE (≤640px): apertar Artigo e Propriedades */
+@media (max-width: 1000px) {
+  /* Tabela continua mais larga que o ecrã mas não exagera */
+  #tabela {
+    min-width: 640px;        /* ajusta 1000–1400 conforme precisares */
+    width: max-content;
   }
+
+  /* 1.ª coluna = Totais (mais estreita no telemóvel) */
+  #tabela th:nth-child(1),
+  #tabela td:nth-child(1) {
+    width: 2ch;
+    min-width: 2ch;
+    max-width: 2ch;
+    /* mantém wrap para quebrar em 2–3 linhas se necessário */
+    /*white-space: normal;*/
+  }
+
+  /* 2.ª coluna = Artigo (mais estreita no telemóvel) */
+  #tabela th:nth-child(2),
+  #tabela td:nth-child(2) {
+    width: 7ch;
+    min-width: 7ch;
+    max-width: 7ch;
+    /* mantém wrap para quebrar em 2–3 linhas se necessário */
+    white-space: normal;
+  }
+
+  /* Propriedades: célula “estado” (o círculo/letra) ainda mais estreita */
+  #tabela th[data-tipo="estado"],
+  #tabela td[data-tipo="estado"] {
+    width: 1em !important;
+    min-width: 1em !important;
+    max-width: 1em !important;
+  }
+
+  /* Propriedades: célula “quantidade” logo a seguir ao estado */
+  #tabela thead th[data-tipo="estado"] + th,
+  #tabela td[data-tipo="estado"] + td {
+    width: 3ch !important;     /* ⇦ ajusta aqui se quiseres mais/menos espaço */
+    min-width: 3ch !important;
+    max-width: 3ch !important;
+  }
+
+  /* (Opcional) reduzir ligeiramente o tamanho do texto na tabela no mobile */
+  #tabela th, #tabela td {
+    font-size: 0.7rem;
+  }
+
+  
+}
+
+/* 1.ª col: sem borda à direita para não “somar” 1px na junção */
+#tabela th:nth-child(1),
+#tabela td:nth-child(1) {
+  border-right: none;
+}
+
+/* 2.ª col: garante a borda à esquerda (a separadora) */
+#tabela th:nth-child(2),
+#tabela td:nth-child(2) {
+  border-left: 1px solid #4B5563;
+}
+
+/* Suaviza “tremuras” de sub-pixels em mobile */
+#tabela th:nth-child(1),
+#tabela td:nth-child(1),
+#tabela th:nth-child(2),
+#tabela td:nth-child(2) {
+  will-change: left;
+  contain: paint;
+}
+
+/* Garantir que o sticky não “come” as bordas */
+#tabela table { border-collapse: separate !important; border-spacing: 0 !important; }
+
+/* 1) 1.ª coluna (Total): sem borda à direita */
+#tabela th:nth-child(1),
+#tabela td:nth-child(1) {
+  border-right: none !important;
+  background-clip: padding-box;
+}
+
+/* 2) 2.ª coluna (Artigo): faz a linha separadora mais visível */
+#tabela th:nth-child(2),
+#tabela td:nth-child(2) {
+  /* opção A: borda mais escura e ligeiramente mais grossa */
+  border-left: 2px solid #374151 !important; /* gray-700 */
+  background-clip: padding-box;
+  z-index: 46; /* acima da 1.ª para a linha ficar por cima */
+}
+
+/* Cabeçalho coerente com o corpo */
+#tabela thead th:nth-child(1) { border-right: none !important; }
+#tabela thead th:nth-child(2) { border-left: 2px solid #374151 !important; }
+
+/* (Opcional) se ainda ficar “sumido” em alguns telemóveis, usa um traço inset em vez da borda: */
+#tabela th:nth-child(2).use-shadow,
+#tabela td:nth-child(2).use-shadow {
+  border-left: none !important;
+  box-shadow: -1px 0 0 0 #374151 inset;  /* linha nítida independente do z-index */
+}
 
   </style>
 </head>
@@ -304,7 +377,7 @@
   <!-- Wrapper relativo só para o input + sugestões -->
   <div class="relative">
     <input id="searchInput" type="text" placeholder="Pesquisar artigo…"
-      class="border-2 border-green-200 rounded-md px-2 py-1 w-80"/>
+      class="border-2 border-green-200 rounded-md px-2 py-1 w-60"/>
     <ul id="suggestions"
       class="absolute left-0 right-0 mt-1 max-h-40 overflow-auto shadow w-80 bg-white border rounded z-10 text-xs"></ul>
   </div>
@@ -318,19 +391,34 @@
     <div id="tabela"></div>
   </div>
 
-  <script>
-    /* Atualiza --first-col-width com a largura da 1ª célula */
-    function updateStickyOffset() {
-      const tbl = document.querySelector('#tabela table');
-      if (!tbl) return;
-      const firstCell = tbl.querySelector('tr > *');
-      tbl.style.setProperty('--first-col-width',
-        firstCell.getBoundingClientRect().width + 'px'
-      );
-    }
-    window.addEventListener('resize', updateStickyOffset);
-    // chamado no final de ui.js, após renderizar a tabela :contentReference[oaicite:1]{index=1}
-  </script>
+<script>
+  /* Calcula offsets exatos para as colunas sticky */
+  function updateStickyOffset() {
+    const tbl = document.querySelector('#tabela table');
+    if (!tbl) return;
+
+    const th1 = tbl.querySelector('thead th:nth-child(1)');
+    const th2 = tbl.querySelector('thead th:nth-child(2)');
+    if (!th1 || !th2) return;
+
+    // largura da 1.ª (se ainda precisares noutros sítios)
+    const w1 = Math.round(th1.getBoundingClientRect().width);
+    tbl.style.setProperty('--first-col-width', w1 + 'px');
+
+    // offset real da 2.ª coluna em relação à TABELA (não ao viewport)
+    const rTable = tbl.getBoundingClientRect();
+    const rTh2   = th2.getBoundingClientRect();
+    const col2Left = Math.round(rTh2.left - rTable.left);
+    tbl.style.setProperty('--col2-left', col2Left + 'px');
+  }
+
+  window.addEventListener('resize', updateStickyOffset);
+  window.addEventListener('orientationchange', () => setTimeout(updateStickyOffset, 50));
+  // continua a ser chamada depois de cada criarTabela() no teu main.js
+</script>
+
+
+
 
   <script type="module" src="js/main.js"></script>
 </body>
