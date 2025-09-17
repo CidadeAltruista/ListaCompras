@@ -228,6 +228,41 @@
       to   { width: var(--estado-ch, 0ch); }
     }
 
+  /* MOBILE: tornar a tabela mais larga e com scroll lateral */
+  @media (max-width: 640px) {
+    /* o wrapper da tabela fica mais largo que o viewport */
+    #tabela {
+      min-width: 1400px;      /* ↑ ajusta: 1200–1800px conforme precisares */
+      width: max-content;     /* mantém a largura real do conteúdo */
+    }
+
+    /* permite arrastar lateralmente no telemóvel */
+    #tabela-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch; /* inércia no iOS */
+    }
+
+    /* alarga as colunas no mobile (opcional, mas ajuda) */
+    #tabela th:nth-child(2),
+    #tabela td:nth-child(2) {             /* Artigo */
+      width: 24ch;
+      max-width: 24ch;
+    }
+
+    #tabela th:nth-child(n+3),
+    #tabela td:nth-child(n+3) {           /* propriedades (a partir da 3ª coluna) */
+      width: 6ch;
+      max-width: 6ch;
+    }
+
+    /* se usas o par estado+quantidade com data-tipo, sobrepõe a largura da quantidade */
+    #tabela thead th[data-tipo="estado"] + th,
+    #tabela td[data-tipo="estado"] + td {
+      width: 8ch !important;
+      min-width: 8ch !important;
+      max-width: 8ch !important;
+    }
+  }
 
   </style>
 </head>
