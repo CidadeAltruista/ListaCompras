@@ -5,434 +5,157 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, minimum-scale=0.25">
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
-    /* === Estilos originais (layout fixo, bordas, inputs, colunas sticky) === */
-    table {
+    /* Base da tabela (sem largura forçada: o <colgroup> manda) */
+    #tabela table{
       table-layout: fixed;
       border-collapse: collapse;
-      --first-col-width: 0px; /* será atualizado por JS */
     }
-    th, td {
+    #tabela th, #tabela td {
       border: 1px solid #4B5563;
+      white-space: normal;
+      word-break: break-word;
+      padding: 4px 6px;
+      vertical-align: top;
     }
-    td[data-tipo="estado"] {
-      min-width: 1em;   /* ou 2ch, ou 24px, conforme o tamanho do ícone */
-      max-width: 1em;
-      width: 1em;
-      padding-left: 0;
-      padding-right: 0;
+
+    /* Sticky col. 1 e 2 */
+    #tabela th:nth-child(1),
+    #tabela td:nth-child(1){
+      position: sticky; left: 0;
+      background-color: #fff;
+      z-index: 46;
+      border-right: none;
+      background-clip: padding-box;
       text-align: center;
     }
-    td[data-tipo="estado"] + td,
-    td[data-tipo="estado"] + td input {
-      min-width: 5ch;  /* aumenta para 6ch ou mais conforme preferires */
-      width: 5ch;
-      max-width: none;
-      padding-left: 0;
-      padding-right: 0;
-      /* podes ajustar aqui se quiseres mais espaço */
-    }
-    td input[type="number"]::-webkit-outer-spin-button,
-    td input[type="number"]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    td input[type="number"] {
-      -moz-appearance: textfield; /* Firefox */
-    }
-
-    td[data-tipo="estado"] { border-right: none; }
-    td[data-tipo="estado"] + td { border-left: none; }
-
-    /* Sticky 1ª coluna (“Total em Falta”) */
-    th:nth-child(1),
-    td:nth-child(1) {
-      position: sticky;
-      left: 0;
-      background-color: white;
-      z-index: 2;
-    }
-    /* Sticky 2ª coluna (“Artigo”) */
-    th:nth-child(2),
-    td:nth-child(2) {
-      position: sticky;
-      left: 4ch;
-      background-color: white;
-      z-index: 3;
+    :root { --col1: 12px; } /* tem de bater com a 1.ª coluna do <colgroup> */
+    #tabela th:nth-child(2),
+    #tabela td:nth-child(2){
+      position: sticky; left: var(--col1);
+      background-color: #fff;
+      z-index: 45;
+      border-left: 2px solid #374151 !important;
       background-clip: padding-box;
     }
 
-    /* === Novos estilos para scroll e sticky header === */
-    /* 1) Container com scroll vertical e horizontal */
-    #tabela-container {
-      max-height: 750px;     /* ajuste conforme necessário */
-      overflow: auto;
-    }
-    /* 2) Garante bordas separadas e largura para scroll horizontal */
-    #tabela {
-      border-collapse: separate;
-      border-spacing: 0;
-      min-width: 600px;
-      width: max-content;
-    }
-    /* 3) Cabeçalho sticky (linha toda) */
-    #tabela thead th {
-      position: sticky;
-      top: 0;
-      background-color: #F3F4F6; /* Tailwind’s bg-gray-200 */
-      z-index: 50;               /* elevado para garantir topo sobre linhas de categoria */
+    /* Linha de categoria */
+    #tabela tr.categoria td{
+      background:#fff !important;
+      font-weight:700;
+      text-align:left;
+      border-top:1px solid #4B5563;
+      border-bottom:1px solid #4B5563;
+      font-size: .75rem;
+      padding:.25rem .5rem;
+      position:relative;
+      z-index:10;
     }
 
-    /* 4) Eleva as colunas 1 e 2 acima do conteúdo, mas abaixo do thead geral */
-    /* 4) Coluna 1 acima da 2 para nunca ser coberta */
-    #tabela th:nth-child(1),
-    #tabela td:nth-child(1) {
-      z-index: 46;   /* > que a 2.ª e < que o thead (60) */
+    /* Bloco das propriedades “nome: qty” */
+    #tabela .aloj-container{
+      display: inline-block; /* abraça as 2 linhas renderizadas */
+      max-width: 100%;
     }
 
-    #tabela th:nth-child(2),
-    #tabela td:nth-child(2) {
-      z-index: 45;
+    /* Sugestões do search */
+    #suggestions{
+      position:absolute;
+      z-index:99999;
+      left:0; width:100%;
+      box-sizing:border-box;
+      max-height:10rem;
+      overflow:auto;
+      background:#fff;
+    }
+    #suggestions:empty{ display:none; }
+
+    /* Estado com animação opcional */
+    #estado{ font-style:italic; }
+    .estado-typing{ display:inline-block; white-space:nowrap; overflow:hidden; animation:none; }
+    @keyframes estadoTyping{ from{ width:0ch; } to{ width: var(--estado-ch, 0ch); } }
+
+    /* --------- COMPORTAMENTO DE EDIÇÃO --------- */
+
+    /* Tabela esbatida por defeito; normal em Edição */
+    #tabela { opacity: .65; transition: opacity .15s ease; }
+    body.editing-on #tabela { opacity: 1; }
+
+    /* Chips (propriedades) só clicáveis em Edição */
+    #tabela .wrap-prop{
+      opacity: .55;
+      pointer-events: none;
+      cursor: default;
+      transition: opacity .12s ease;
+    }
+    body.editing-on #tabela .wrap-prop{
+      opacity: 1;
+      pointer-events: auto;
+      cursor: pointer;
     }
 
-    /* 5) Cabeçalhos próprios das colunas 1 e 2 acima de tudo */
-    #tabela thead th:nth-child(1),
-    #tabela thead th:nth-child(2) {
-      z-index: 60;
-    }
-    
-    /* 1) Garante layout fixo para respeitar widths */
-    #tabela {
-      table-layout: fixed;
-    }
-
-    /* 2) Força wrap de texto como antes */
-    #tabela th,
-    #tabela td {
-      white-space: normal;
-      word-break: break-word;
-    }
-
-    /* 3) Larguras específicas para colunas 1 e 2 */
-    /* 1ª coluna com largura fixa e estreita */
-    #tabela th:nth-child(1),
-    #tabela td:nth-child(1) {
-      white-space: nowrap;
-      width: 6ch;
-      min-width: 6ch;
-      max-width: 6ch;
-      overflow: hidden;          /* opcional */
-      text-overflow: ellipsis;   /* opcional */
-      box-sizing: border-box;    /* inclui a borda no cálculo da largura */
-    }
-
-
-    /* 2ª coluna: mais apertada */
-    #tabela th:nth-child(2),
-    #tabela td:nth-child(2) {
-      width: 17ch;              /* ajusta entre 6ch–10ch conforme o teu conteúdo */
-      max-width: 17ch;
-    }
-
-    /* 3ª coluna em diante: mais estreitas e títulos podem quebrar linha */
-    #tabela th:nth-child(n+3),
-    #tabela td:nth-child(n+3) {
-      width: 4ch;           /* ajusta conforme necessário, p.ex. 6ch–8ch */
-      max-width: 6ch;
-      white-space: normal;  /* permite quebra de linha */
-      word-break: break-word;
-      text-align: center;   /* opcional: centraliza o conteúdo */
-    }
-
-    /* Força a largura da célula do ícone e do cabeçalho correspondente */
-    td[data-tipo="estado"],
-    th[data-tipo="estado"] {
-      width: 1.5em;
-      min-width: 1.5em;
-      max-width: 1.5em;
-      padding-left: 0;
-      padding-right: 0;
-      text-align: center;
-    }
-
-    tr.categoria td {
-      background: #fff !important;
-      font-weight: bold;
-      text-align: left;
-      border-bottom: 1px solid #4B5563;
-      border-top: 1px solid #4B5563;
-      font-size: 0.75rem; /* igual a text-xs do Tailwind */
-      padding-top: 0.25rem;  /* igual a py-1 */
-      padding-bottom: 0.25rem;
-      padding-left: 0.5rem;  /* igual a px-2 */
-      padding-right: 0.5rem;
-      position: relative;   /* necessário para controlar z-index */
-      z-index: 10;          /* abaixo do thead (z-index:50) e das colunas sticky */
-    }
-
-    /* Eleva o dropdown das sugestões acima de todos os stickies e posiciona corretamente */
-    #suggestions {
-      position: absolute;            /* já era, reforça */
-      z-index: 99999;                /* acima de qualquer sticky (thead z-index:60) */
-      top: calc(100% + 0.25rem);     /* logo abaixo do input por defeito */
-      left: 0;
-      width: 100%;
-      box-sizing: border-box;
-      max-height: 10rem;
-      overflow: auto;
-      background: white;
-    }
-
-    /* Remove/reduce padding in first two columns */
-    #tabela td:nth-child(1),
-    #tabela th:nth-child(1),
-    #tabela td:nth-child(2),
-    #tabela th:nth-child(2) {
-        padding-left: 0.25rem;  /* 4px */
-        padding-right: 0.25rem; /* 4px */
-    }
-
-    /* Add borders to header cells */
-    #tabela thead th {
-        border: 1px solid #E5E7EB;  /* gray-200 */
-        border-bottom: 2px solid #D1D5DB;  /* gray-300, slightly stronger bottom border */
-        background-color: #F9FAFB;  /* gray-50 */
-    }
-
-    #suggestions:empty { display: none; }
-
-    /* Esconder a última coluna (botão X) — mas NÃO nas linhas .categoria */
-    #tabela tr:not(.categoria) th:last-child,
-    #tabela tr:not(.categoria) td:last-child {
-      display: none;
-    }
-
-    /* Mostrar a última coluna só em modo edição — também ignorando .categoria */
-    body.modo-edicao #tabela tr:not(.categoria) th:last-child,
-    body.modo-edicao #tabela tr:not(.categoria) td:last-child {
-      display: table-cell;
-    }
-
-    
-    /* Estado em itálico + animação tipo "máquina de escrever" */
-    #estado {
-      font-style: italic;
-    }
-
-    /* classe que ativa a animação */
-    .estado-typing {
-      display: inline-block;
-      white-space: nowrap;
-      overflow: hidden;
-      /* o width será animado por JS com steps, chumbado ao número de caracteres */
-      animation: none;
-    }
-
-    @keyframes estadoTyping {
-      from { width: 0ch; }
-      to   { width: var(--estado-ch, 0ch); }
-    }
-
-  /* MOBILE (≤640px): apertar Artigo e Propriedades */
-@media (max-width: 1000px) {
-  /* Tabela continua mais larga que o ecrã mas não exagera */
-  #tabela {
-    min-width: 640px;        /* ajusta 1000–1400 conforme precisares */
-    width: max-content;
-  }
-
-  /* 1.ª coluna = Totais (mais estreita no telemóvel) */
-  #tabela th:nth-child(1),
-  #tabela td:nth-child(1) {
-    width: 2ch;
-    min-width: 2ch;
-    max-width: 2ch;
-    /* mantém wrap para quebrar em 2–3 linhas se necessário */
-    /*white-space: normal;*/
-  }
-
-  /* 2.ª coluna = Artigo (mais estreita no telemóvel) */
-  #tabela th:nth-child(2),
-  #tabela td:nth-child(2) {
-    width: 7ch;
-    min-width: 7ch;
-    max-width: 7ch;
-    /* mantém wrap para quebrar em 2–3 linhas se necessário */
-    white-space: normal;
-  }
-
-  /* Propriedades: célula “estado” (o círculo/letra) ainda mais estreita */
-  #tabela th[data-tipo="estado"],
-  #tabela td[data-tipo="estado"] {
-    width: 1em !important;
-    min-width: 1em !important;
-    max-width: 1em !important;
-  }
-
-  /* Propriedades: célula “quantidade” logo a seguir ao estado */
-  #tabela thead th[data-tipo="estado"] + th,
-  #tabela td[data-tipo="estado"] + td {
-    width: 3ch !important;     /* ⇦ ajusta aqui se quiseres mais/menos espaço */
-    min-width: 3ch !important;
-    max-width: 3ch !important;
-  }
-
-  /* (Opcional) reduzir ligeiramente o tamanho do texto na tabela no mobile */
-  #tabela th, #tabela td {
-    font-size: 0.7rem;
-  }
-
-  
-}
-
-/* 1.ª col: sem borda à direita para não “somar” 1px na junção */
-#tabela th:nth-child(1),
-#tabela td:nth-child(1) {
-  border-right: none;
-}
-
-/* 2.ª col: garante a borda à esquerda (a separadora) */
-#tabela th:nth-child(2),
-#tabela td:nth-child(2) {
-  border-left: 1px solid #4B5563;
-}
-
-/* Suaviza “tremuras” de sub-pixels em mobile */
-#tabela th:nth-child(1),
-#tabela td:nth-child(1),
-#tabela th:nth-child(2),
-#tabela td:nth-child(2) {
-  will-change: left;
-  contain: paint;
-}
-
-/* Garantir que o sticky não “come” as bordas */
-#tabela table { border-collapse: separate !important; border-spacing: 0 !important; }
-
-/* 1) 1.ª coluna (Total): sem borda à direita */
-#tabela th:nth-child(1),
-#tabela td:nth-child(1) {
-  border-right: none !important;
-  background-clip: padding-box;
-}
-
-/* 2) 2.ª coluna (Artigo): faz a linha separadora mais visível */
-#tabela th:nth-child(2),
-#tabela td:nth-child(2) {
-  /* opção A: borda mais escura e ligeiramente mais grossa */
-  border-left: 2px solid #374151 !important; /* gray-700 */
-  background-clip: padding-box;
-  z-index: 46; /* acima da 1.ª para a linha ficar por cima */
-}
-
-/* Cabeçalho coerente com o corpo */
-#tabela thead th:nth-child(1) { border-right: none !important; }
-#tabela thead th:nth-child(2) { border-left: 2px solid #374151 !important; }
-
-/* (Opcional) se ainda ficar “sumido” em alguns telemóveis, usa um traço inset em vez da borda: */
-#tabela th:nth-child(2).use-shadow,
-#tabela td:nth-child(2).use-shadow {
-  border-left: none !important;
-  box-shadow: -1px 0 0 0 #0062ff inset;  /* linha nítida independente do z-index */
-}
-
-
-
+    /* Mostrar a última coluna (❌) apenas em Edição */
+    #tabela tr:not(.categoria) td:last-child{ display:none; }
+    body.editing-on #tabela tr:not(.categoria) td:last-child{ display:table-cell; }
   </style>
 </head>
+
 <body class="bg-gray-100 text-gray-900 p-4 text-sm">
-  
-  <!-- NOVO CABEÇALHO -->
-<header class="mb-3">
-  <!-- título mais pequeno, em cima -->
-  <h1 class="text-sm font-semibold text-gray-700 tracking-wide uppercase mb-2">
-    Lista de compras - Cidade Altruísta Lda
-  </h1>
+  <!-- Cabeçalho -->
+  <header class="mb-3">
+    <h1 class="text-sm font-semibold text-gray-700 tracking-wide uppercase mb-2">
+      Lista de compras - Cidade Altruísta Lda
+    </h1>
 
-  <!-- botões com o MESMO tamanho, em grelha -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-    <button id="modoEdicao"
-      class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-emerald-600 rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-      </svg>
-      <span>Edição</span>
-    </button>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <button id="modoEdicao"
+        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-emerald-600 rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>Edição</span>
+      </button>
 
-    <button id="mostrarFaltas"
-      class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Em Falta</span>
-    </button>
+      <button id="mostrarFaltas"
+        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Em Falta</span>
+      </button>
 
-    <button id="mostrarComprados"
-      class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-amber-500 rounded-md shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Comprados</span>
-    </button>
+      <button id="mostrarComprados"
+        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-amber-500 rounded-md shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Comprados</span>
+      </button>
 
-    <button id="mostrarTudo"
-      class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-gray-600 rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-      <span>Tudo</span>
-    </button>
-  </div>
-</header>
+      <button id="mostrarTudo"
+        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-gray-600 rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <span>Tudo</span>
+      </button>
+    </div>
+  </header>
 
-
-<div class="mb-4 flex items-center gap-3">
-  <!-- Wrapper relativo só para o input + sugestões -->
-  <div class="relative">
-    <input id="searchInput" type="text" placeholder="Pesquisar artigo…"
-      class="border-2 border-green-200 rounded-md px-2 py-1 w-60"/>
-    <ul id="suggestions"
-      class="absolute left-0 right-0 mt-1 max-h-40 overflow-auto shadow w-80 bg-white border rounded z-10 text-xs"></ul>
+  <!-- Pesquisa + estado -->
+  <div class="mb-4 flex items-center gap-3">
+    <div class="relative">
+      <input id="searchInput" type="text" placeholder="Pesquisar artigo…"
+             class="border-2 border-green-200 rounded-md px-2 py-1 w-60"/>
+      <ul id="suggestions"
+          class="absolute left-0 right-0 mt-1 max-h-40 overflow-auto shadow w-80 bg-white border rounded z-10 text-xs"></ul>
+    </div>
+    <em id="estado" class="text-xs text-gray-600 italic whitespace-nowrap"></em>
   </div>
 
-  <!-- Mensagens de estado, ao lado do input -->
-  <em id="estado" class="text-xs text-gray-600 italic whitespace-nowrap"></em>
-</div>
-
-  <!-- Container que dá scroll à tabela inteira -->
-  <div id="tabela-container">
-    <div id="tabela"></div>
-  </div>
-
-<script>
-  /* Calcula offsets exatos para as colunas sticky */
-  function updateStickyOffset() {
-    const tbl = document.querySelector('#tabela table');
-    if (!tbl) return;
-
-    const th1 = tbl.querySelector('thead th:nth-child(1)');
-    const th2 = tbl.querySelector('thead th:nth-child(2)');
-    if (!th1 || !th2) return;
-
-    // largura da 1.ª (se ainda precisares noutros sítios)
-    const w1 = Math.round(th1.getBoundingClientRect().width);
-    tbl.style.setProperty('--first-col-width', w1 + 'px');
-
-    // offset real da 2.ª coluna em relação à TABELA (não ao viewport)
-    const rTable = tbl.getBoundingClientRect();
-    const rTh2   = th2.getBoundingClientRect();
-    const col2Left = Math.round(rTh2.left - rTable.left);
-    tbl.style.setProperty('--col2-left', col2Left + 'px');
-  }
-
-  window.addEventListener('resize', updateStickyOffset);
-  window.addEventListener('orientationchange', () => setTimeout(updateStickyOffset, 50));
-  // continua a ser chamada depois de cada criarTabela() no teu main.js
-</script>
-
-
-
+  <!-- Tabela -->
+  <div id="tabela"></div>
 
   <script type="module" src="js/main.js"></script>
 </body>
