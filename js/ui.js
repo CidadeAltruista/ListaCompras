@@ -10,11 +10,10 @@ export function atualizarEstado(msg) {
   const el = document.getElementById('estado');
   if (!el) return;
   el.textContent = msg;
+  el.classList.toggle('estado-ok', msg === 'Pronto');
+  el.classList.toggle('estado-busy', msg !== 'Pronto');
   el.classList.remove('estado-typing');
-  void el.offsetWidth; // reflow para reiniciar a animação
-  el.style.setProperty('--estado-ch', `${msg.length}ch`);
-  el.style.animation = `estadoTyping 1400ms steps(${Math.max(msg.length, 1)}) forwards`;
-  el.classList.add('estado-typing');
+  el.style.animation = '';
 }
 
 /** Alterna entre Edição / Concluir */
@@ -26,7 +25,9 @@ export function toggleModoEdicao() {
 /** Habilita/desabilita controles e lápis + classe no <body> */
 export function aplicarModoEdicao() {
   const botao = document.getElementById('modoEdicao');
-  if (botao) botao.textContent = modoEdicaoAtivo ? 'Concluir' : 'Edição';
+  const label = botao?.querySelector('.button-label');
+  if (label) label.textContent = modoEdicaoAtivo ? 'Concluir' : 'Edição';
+  else if (botao) botao.textContent = modoEdicaoAtivo ? 'Concluir' : 'Edição';
 
   // Inputs, estados e coluna delete ganham/ perdem “inativos”
   document.querySelectorAll('#tabela input, td[data-tipo="estado"], td[data-tipo="delete"]')
@@ -42,6 +43,7 @@ export function aplicarModoEdicao() {
 
   // Classe única de estado no <body> (controla esbatido e ❌ por CSS)
   document.body.classList.toggle('editing-on', modoEdicaoAtivo);
+  botao?.classList.toggle('is-active', modoEdicaoAtivo);
   document.body.classList.remove('modo-edicao'); // limpa classe antiga, se existir
 }
 
@@ -54,11 +56,31 @@ function chunkArray(arr, size) {
 
 function classesPorEstado(estado) {
   switch (estado) {
-    case 'F': return { wrap: 'bg-red-100 text-red-800',    name: 'underline', qty: 'font-semibold' };
-    case 'C': return { wrap: 'bg-yellow-100 text-yellow-800', name: 'underline', qty: 'font-semibold' };
-    case 'R': return { wrap: 'bg-green-100 text-green-800',  name: 'underline', qty: 'font-semibold' };
-    default : return { wrap: 'text-gray-600', name: '', qty: '' };
+    case 'F': return { wrap: 'bg-red-50 text-red-800 border-red-100', name: 'underline', qty: 'font-semibold' };
+    case 'C': return { wrap: 'bg-amber-50 text-amber-800 border-amber-100', name: 'underline', qty: 'font-semibold' };
+    case 'R': return { wrap: 'bg-emerald-50 text-emerald-800 border-emerald-100', name: 'underline', qty: 'font-semibold' };
+    default : return { wrap: 'bg-gray-50 text-gray-600 border-gray-100', name: '', qty: '' };
   }
+}
+
+const ORDEM_PROPRIEDADES = [
+  'Vistosa',
+  '181-A',
+  '181-B',
+  '230-A',
+  'Jardim',
+  'Francos',
+  '424',
+  'Sta Catarina'
+];
+
+function ordenarProps(props) {
+  const ordem = new Map(ORDEM_PROPRIEDADES.map((nome, index) => [nome.toLowerCase(), index]));
+  return [...props].sort((a, b) => {
+    const ai = ordem.has(a.nome.toLowerCase()) ? ordem.get(a.nome.toLowerCase()) : 999;
+    const bi = ordem.has(b.nome.toLowerCase()) ? ordem.get(b.nome.toLowerCase()) : 999;
+    return ai - bi || a.nome.localeCompare(b.nome);
+  });
 }
 
 /**
@@ -80,6 +102,7 @@ export function criarTabela(dados, rowIndices) {
   for (let i = 2; i < cab.length; i += 2) {
     props.push({ nome: cab[i], estadoCol: i, qtdeCol: i + 1 });
   }
+  props = ordenarProps(props);
   if (Array.isArray(window.PROPS_TO_SHOW)) {
     props = props.filter(p => window.PROPS_TO_SHOW.includes(p.nome));
   }
@@ -98,15 +121,15 @@ export function criarTabela(dados, rowIndices) {
 
   // Tabela
   const table = document.createElement('table');
-  table.className = 'bg-white shadow rounded text-xs';
+  table.className = 'text-xs';
   table.style.tableLayout = 'fixed';
-  table.style.borderCollapse = 'collapse';
-  table.style.width = '450px'; // ajusta aqui o total se quiseres
+  table.style.borderCollapse = 'separate';
+  table.style.borderSpacing = '0';
 
   // Colgroup: [Total, Artigo, Propriedades, X]
   const colgroup = document.createElement('colgroup');
   // garante visibilidade confortável do X (>= 28–32 px)
-  ['25px', '90px', 'auto', '32px'].forEach(w => {
+  ['var(--col1)', 'var(--col2)', 'var(--props-col)', '34px'].forEach(w => {
     const col = document.createElement('col');
     col.style.width = w;
     colgroup.appendChild(col);
@@ -132,22 +155,22 @@ export function criarTabela(dados, rowIndices) {
 
       // 1) Total
       const tdSum = document.createElement('td');
-      tdSum.className = 'border text-center font-semibold text-xs align-top';
-      tdSum.style.padding = '4px 4px 4px 6px';
+      tdSum.className = 'text-center align-top tabular-nums';
+      tdSum.style.padding = '4px 4px';
       tr.appendChild(tdSum);
 
       // 2) Artigo
       const tdArt = document.createElement('td');
       tdArt.dataset.tipo = 'artigo';
-      tdArt.className = 'border text-xs relative align-top';
-      tdArt.style.padding = '4px 6px';
+      tdArt.className = 'text-xs relative align-top font-semibold';
+      tdArt.style.padding = '5px 8px';
 
       const spanText = document.createElement('span');
       spanText.textContent = row[1];
-      spanText.className = 'pr-4';
+      spanText.className = 'block pr-4 leading-4';
 
       const pencil = document.createElement('span');
-      pencil.innerHTML = '✏️';
+      pencil.innerHTML = '&#9998;';
       pencil.className = 'pencil-icon absolute top-1 right-1 text-xs cursor-pointer transition-opacity';
       pencil.style.opacity = modoEdicaoAtivo ? '1' : '0';
       pencil.title = 'Editar artigo';
@@ -158,8 +181,8 @@ export function criarTabela(dados, rowIndices) {
 
       // 3) Propriedades (2 linhas, 4 por linha)
       const tdProps = document.createElement('td');
-      tdProps.className = 'border align-top';
-      tdProps.style.padding = '4px 6px';
+      tdProps.className = 'align-top';
+      tdProps.style.padding = '4px 8px';
 
       const segmentos = props.map(p => ({
         nome: p.nome,
@@ -179,11 +202,11 @@ export function criarTabela(dados, rowIndices) {
 
       linhas.forEach(linha => {
         const rowDiv = document.createElement('div');
-        rowDiv.className = 'flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-4';
+        rowDiv.className = 'flex flex-wrap gap-x-1.5 gap-y-0.5 text-[10px] leading-3';
         linha.forEach(seg => {
           const wrap = document.createElement('span');
           const cls = classesPorEstado(seg.estado);
-          wrap.className = `wrap-prop px-1 py-0.5 rounded ${cls.wrap}`;
+          wrap.className = `wrap-prop px-1.5 py-0 ${cls.wrap}`;
           wrap.style.userSelect = 'none';
 
           // Nome (alterna F/C/R)
@@ -199,7 +222,7 @@ export function criarTabela(dados, rowIndices) {
             row[seg.estadoCol] = next;
 
             const novoCls = classesPorEstado(next);
-            wrap.className = `wrap-prop px-1 py-0.5 rounded ${novoCls.wrap}`;
+            wrap.className = `wrap-prop px-1.5 py-0 ${novoCls.wrap}`;
             btnNome.className = `${novoCls.name}`;
             btnQty.className = `ml-0.5 tabular-nums ${novoCls.qty}`;
 
@@ -257,7 +280,7 @@ export function criarTabela(dados, rowIndices) {
 
       if (excedente > 0) {
         const badge = document.createElement('div');
-        badge.className = 'text-[10px] leading-4 text-gray-500';
+        badge.className = 'text-[10px] leading-4 text-gray-500 pt-0.5';
         const restantes = Math.max(0, segmentos.length - 8); // 8 = 2 linhas * 4
         badge.textContent = `+${restantes} alojamento(s) oculto(s)`;
         container.appendChild(badge);
@@ -269,10 +292,10 @@ export function criarTabela(dados, rowIndices) {
       // 4) Delete (❌) — visível só em edição por CSS (body.editing-on)
       const tdDel = document.createElement('td');
       tdDel.dataset.tipo = 'delete';
-      tdDel.textContent = '❌';
+      tdDel.textContent = String.fromCharCode(215);
       tdDel.disabled = true;
-      tdDel.className = 'border px-2 py-1 text-center opacity-50 cursor-pointer text-xs align-top';
-      tdDel.style.padding = '4px';
+      tdDel.className = 'text-center opacity-50 cursor-pointer text-sm align-top text-red-700 font-bold';
+      tdDel.style.padding = '4px 4px';
       tdDel.addEventListener('click', async () => {
         if (!modoEdicaoAtivo) return;
         if (!confirm(`Eliminar “${row[1]}”?`)) return;
@@ -286,14 +309,28 @@ export function criarTabela(dados, rowIndices) {
       // Totais/cores do Artigo
       function updateSumAndArt() {
         let sum = 0;
+        let bought = 0;
         const estLines = props.map(p => row[p.estadoCol]);
         props.forEach(p => {
           if (row[p.estadoCol] === 'F') {
             const v = parseInt(row[p.qtdeCol], 10);
             if (!isNaN(v)) sum += v;
+          } else if (row[p.estadoCol] === 'C') {
+            const v = parseInt(row[p.qtdeCol], 10);
+            if (!isNaN(v)) bought += v;
           }
         });
-        tdSum.textContent = sum > 0 ? sum : '';
+        tdSum.innerHTML = '';
+        const falta = document.createElement('div');
+        falta.textContent = sum > 0 ? sum : '';
+        falta.className = 'font-bold text-[12px] leading-3';
+        tdSum.appendChild(falta);
+        if (bought > 0) {
+          const comprado = document.createElement('div');
+          comprado.textContent = bought;
+          comprado.className = 'inline-block rounded bg-amber-100 px-1 text-[10px] leading-3 font-normal text-amber-700';
+          tdSum.appendChild(comprado);
+        }
 
         tdSum.classList.remove('bg-red-100','bg-yellow-100','text-red-800');
         spanText.classList.remove('bg-red-100','bg-yellow-100','text-red-800');
@@ -310,39 +347,46 @@ export function criarTabela(dados, rowIndices) {
       function enterEditMode() {
         if (!modoEdicaoAtivo) return;
 
-        const inputArtigo = document.createElement('input');
-        inputArtigo.type  = 'text';
+        const inputArtigo = document.createElement('textarea');
+        inputArtigo.rows = 2;
         inputArtigo.value = spanText.textContent;
-        inputArtigo.className = 'w-full text-xs border rounded px-1 py-0.5 mb-1';
+        inputArtigo.className = 'w-full min-h-9 resize-none text-xs leading-4 border rounded px-1 py-0.5 mb-1';
 
         const categoriasUnicas = Array.isArray(window.TODAS_CATEGORIAS)
           ? window.TODAS_CATEGORIAS
           : Array.from(new Set((dadosAtuais || []).slice(2).map(r => r?.[0]).filter(Boolean)));
 
         const selectCat = document.createElement('select');
-        selectCat.className = 'w-full text-xs border rounded px-1 py-0.5 mb-1';
+        selectCat.className = 'w-full min-h-9 text-xs leading-4 border rounded px-1 py-0.5 mb-1';
         categoriasUnicas.forEach(c => {
           const opt = document.createElement('option');
-          opt.value = c; opt.textContent = c;
+          opt.value = c;
+          opt.textContent = c;
           if (c === row[0]) opt.selected = true;
           selectCat.appendChild(opt);
         });
+
         const optNova = document.createElement('option');
         optNova.value = '__nova__';
         optNova.textContent = '➕ Adicionar Nova';
         selectCat.appendChild(optNova);
+
         if (row[0] && !categoriasUnicas.includes(row[0])) {
           const opt = document.createElement('option');
-          opt.value = row[0]; opt.textContent = row[0];
+          opt.value = row[0];
+          opt.textContent = row[0];
           opt.selected = true;
           selectCat.insertBefore(opt, selectCat.firstChild);
         }
+
         selectCat.addEventListener('change', () => {
           if (selectCat.value === '__nova__') {
             const nova = prompt('Nova categoria:');
             if (nova && !categoriasUnicas.includes(nova)) {
               const opt = document.createElement('option');
-              opt.value = nova; opt.textContent = nova; opt.selected = true;
+              opt.value = nova;
+              opt.textContent = nova;
+              opt.selected = true;
               selectCat.insertBefore(opt, optNova);
               selectCat.value = nova;
             } else if (nova) {
@@ -386,7 +430,7 @@ export function criarTabela(dados, rowIndices) {
             if (!container.contains(document.activeElement)) finishEdit();
           }, 0);
         });
-        inputArtigo.addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); inputArtigo.blur(); } });
+        inputArtigo.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); inputArtigo.blur(); } });
         selectCat.addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); selectCat.blur(); } });
       }
       pencil.addEventListener('click', enterEditMode);
@@ -404,13 +448,33 @@ export function criarTabela(dados, rowIndices) {
       (function runSum(){ 
         const estLines = props.map(p => row[p.estadoCol]);
         let sum = 0; 
-        props.forEach(p => { if (row[p.estadoCol]==='F'){ const v=parseInt(row[p.qtdeCol],10); if(!isNaN(v)) sum+=v; }});
-        tdSum.textContent = sum > 0 ? sum : '';
+        let bought = 0;
+        props.forEach(p => {
+          const v=parseInt(row[p.qtdeCol],10);
+          if (row[p.estadoCol]==='F' && !isNaN(v)) sum+=v;
+          if (row[p.estadoCol]==='C' && !isNaN(v)) bought+=v;
+        });
+        tdSum.innerHTML = '';
+        const falta = document.createElement('div');
+        falta.textContent = sum > 0 ? sum : '';
+        falta.className = 'font-bold text-[12px] leading-3';
+        tdSum.appendChild(falta);
+        if (bought > 0) {
+          const comprado = document.createElement('div');
+          comprado.textContent = bought;
+          comprado.className = 'inline-block rounded bg-amber-100 px-1 text-[10px] leading-3 font-normal text-amber-700';
+          tdSum.appendChild(comprado);
+        }
         tdSum.classList.remove('bg-red-100','bg-yellow-100','text-red-800');
         spanText.classList.remove('bg-red-100','bg-yellow-100','text-red-800');
         if (estLines.includes('F')) { tdSum.classList.add('bg-red-100','text-red-800'); spanText.classList.add('bg-red-100','text-red-800'); }
         else if (estLines.includes('C')) { tdSum.classList.add('bg-yellow-100'); spanText.classList.add('bg-yellow-100'); }
       })();
+
+      if (window.AUTO_EDIT_ROW_ID === sheetRow) {
+        window.AUTO_EDIT_ROW_ID = null;
+        setTimeout(enterEditMode, 0);
+      }
     }
   }
 

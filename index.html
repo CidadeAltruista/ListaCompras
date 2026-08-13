@@ -2,160 +2,514 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, minimum-scale=0.25">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lista de Compras</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Base da tabela (sem largura forçada: o <colgroup> manda) */
-    #tabela table{
-      table-layout: fixed;
-      border-collapse: collapse;
+    :root {
+      --bg: #f4f5f2;
+      --panel: #ffffff;
+      --ink: #17201b;
+      --muted: #657066;
+      --line: #d8ded6;
+      --line-strong: #aeb9ad;
+      --green: #16704a;
+      --green-strong: #0f5d3c;
+      --blue: #2d5f9a;
+      --red: #c7352f;
+      --amber: #c88317;
+      --slate: #4f5b53;
+      --col1: 32px;
+      --col2: 128px;
+      --props-col: 310px;
+      --table-width: calc(var(--col1) + var(--col2) + var(--props-col));
     }
-    #tabela th, #tabela td {
-      border: 1px solid #4B5563;
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% -10%, rgba(22,112,74,.18), transparent 24rem),
+        radial-gradient(circle at 92% 0%, rgba(45,95,154,.14), transparent 26rem),
+        linear-gradient(180deg, rgba(255,255,255,.84), rgba(244,245,242,.96) 30rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app-shell {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      margin: -18px -18px 16px;
+      padding: 14px 18px 12px;
+      background: rgba(244,245,242,.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(216,222,214,.9);
+    }
+
+    .header-grid {
+      display: block;
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 2px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .title-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: baseline;
+      justify-content: center;
+    }
+
+    .title-row h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 4vw, 2.25rem);
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    #estado {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 100;
+      min-height: 0;
+      color: var(--red);
+      font-size: .78rem;
+      font-weight: 750;
+      font-style: italic;
+      white-space: nowrap;
+    }
+
+    #estado.estado-ok { color: var(--green); }
+    #estado.estado-busy { color: var(--red); }
+
+    .status-pill {
+      display: contents;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: center;
+      justify-items: center;
+      margin-top: 12px;
+    }
+
+    .search-wrap {
+      position: relative;
+      min-width: 0;
+      width: min(var(--table-width), 100%);
+    }
+
+    #searchInput {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #fff;
+      padding: 0 14px 0 38px;
+      color: var(--ink);
+      font-size: .95rem;
+      outline: none;
+      box-shadow: 0 1px 2px rgba(23,32,27,.04);
+    }
+
+    #searchInput:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(22,112,74,.14);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    #suggestions {
+      position: absolute;
+      z-index: 99999;
+      left: 0;
+      width: 100%;
+      box-sizing: border-box;
+      max-height: 14rem;
+      overflow: auto;
+      margin-top: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 18px 45px rgba(23,32,27,.18);
+    }
+
+    #suggestions:empty { display: none; }
+    #suggestions li { padding: 10px 12px; font-size: .85rem; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(96px, auto));
+      gap: 8px;
+      justify-content: center;
+      order: -1;
+    }
+
+    .action-button {
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0 13px;
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 750;
+      white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(23,32,27,.12);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+
+    .action-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(23,32,27,.14);
+    }
+
+    .action-button:focus {
+      outline: 3px solid rgba(22,112,74,.2);
+      outline-offset: 2px;
+    }
+
+    .action-button svg {
+      width: 17px;
+      height: 17px;
+      flex: 0 0 auto;
+    }
+
+    .button-edit { background: var(--green); }
+    .button-edit:hover { background: var(--green-strong); }
+    .button-faltas { background: var(--red); }
+    .button-comprados { background: var(--amber); }
+    .button-tudo { background: var(--slate); }
+
+    body.editing-on .button-edit {
+      background: #111827;
+    }
+
+    .action-button.is-active {
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.55), 0 8px 20px rgba(23,32,27,.14);
+    }
+
+    .table-panel {
+      width: max-content;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 20px 50px rgba(23,32,27,.08);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .property-filters {
+      width: max-content;
+      max-width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 7px 10px;
+      margin: 0 auto;
+    }
+
+    .property-filter {
+      min-height: 28px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(255,255,255,.85);
+      padding: 4px 10px;
+      color: var(--slate);
+      font-size: .72rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background .12s ease, border-color .12s ease, color .12s ease, transform .12s ease;
+    }
+
+    .property-filter:hover {
+      transform: translateY(-1px);
+      border-color: var(--green);
+    }
+
+    .property-filter.is-active {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+
+    #tabela {
+      width: 100%;
+      overflow: auto;
+      opacity: .9;
+      transition: opacity .15s ease;
+    }
+
+    body.editing-on #tabela { opacity: 1; }
+
+    #tabela table {
+      width: max-content;
+      min-width: 0;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+    }
+
+    #tabela th,
+    #tabela td {
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
       white-space: normal;
       word-break: break-word;
-      padding: 4px 6px;
       vertical-align: top;
     }
 
-    /* Sticky col. 1 e 2 */
+    #tabela td:last-child {
+      border-right: 0;
+    }
+
+    #tabela tr:not(.categoria) td {
+      background: #fff;
+      transition: background .12s ease;
+    }
+
+    #tabela tr:not(.categoria):hover td {
+      background: #fbfcfa;
+    }
+
     #tabela th:nth-child(1),
-    #tabela td:nth-child(1){
-      position: sticky; left: 0;
-      background-color: #fff;
+    #tabela td:nth-child(1) {
+      position: sticky;
+      left: 0;
       z-index: 46;
-      border-right: none;
-      background-clip: padding-box;
+      background: #fff;
       text-align: center;
-    }
-    :root { --col1: 12px; } /* tem de bater com a 1.ª coluna do <colgroup> */
-    #tabela th:nth-child(2),
-    #tabela td:nth-child(2){
-      position: sticky; left: var(--col1);
-      background-color: #fff;
-      z-index: 45;
-      border-left: 2px solid #374151 !important;
       background-clip: padding-box;
     }
 
-    /* Linha de categoria */
-    #tabela tr.categoria td{
-      background:#fff !important;
-      font-weight:700;
-      text-align:left;
-      border-top:1px solid #4B5563;
-      border-bottom:1px solid #4B5563;
-      font-size: .75rem;
-      padding:.25rem .5rem;
-      position:relative;
-      z-index:10;
+    #tabela th:nth-child(2),
+    #tabela td:nth-child(2) {
+      position: sticky;
+      left: var(--col1);
+      z-index: 45;
+      background: #fff;
+      border-left: 1px solid var(--line-strong);
+      background-clip: padding-box;
     }
 
-    /* Bloco das propriedades “nome: qty” */
-    #tabela .aloj-container{
-      display: inline-block; /* abraça as 2 linhas renderizadas */
+    #tabela tr.categoria td {
+      position: sticky;
+      left: 0;
+      z-index: 50;
+      padding: 2px 8px;
+      border-top: 1px solid var(--line-strong);
+      border-bottom: 1px solid var(--line-strong);
+      background: #eef2ec !important;
+      color: #6b746b;
+      font-size: .62rem;
+      font-weight: 750;
+      letter-spacing: .04em;
+      line-height: 1.05;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    #tabela .aloj-container {
+      display: block;
       max-width: 100%;
     }
 
-    /* Sugestões do search */
-    #suggestions{
-      position:absolute;
-      z-index:99999;
-      left:0; width:100%;
-      box-sizing:border-box;
-      max-height:10rem;
-      overflow:auto;
-      background:#fff;
-    }
-    #suggestions:empty{ display:none; }
-
-    /* Estado com animação opcional */
-    #estado{ font-style:italic; }
-    .estado-typing{ display:inline-block; white-space:nowrap; overflow:hidden; animation:none; }
-    @keyframes estadoTyping{ from{ width:0ch; } to{ width: var(--estado-ch, 0ch); } }
-
-    /* --------- COMPORTAMENTO DE EDIÇÃO --------- */
-
-    /* Tabela esbatida por defeito; normal em Edição */
-    #tabela { opacity: .65; transition: opacity .15s ease; }
-    body.editing-on #tabela { opacity: 1; }
-
-    /* Chips (propriedades) só clicáveis em Edição */
-    #tabela .wrap-prop{
-      opacity: .55;
+    #tabela .wrap-prop {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      opacity: .74;
       pointer-events: none;
       cursor: default;
-      transition: opacity .12s ease;
+      transition: opacity .12s ease, transform .12s ease, border-color .12s ease;
     }
-    body.editing-on #tabela .wrap-prop{
+
+    #tabela .wrap-prop {
+      min-height: 16px;
+      line-height: 1.15;
+    }
+
+    body.editing-on #tabela .wrap-prop {
       opacity: 1;
       pointer-events: auto;
       cursor: pointer;
     }
 
-    /* Mostrar a última coluna (❌) apenas em Edição */
-    #tabela tr:not(.categoria) td:last-child{ display:none; }
-    body.editing-on #tabela tr:not(.categoria) td:last-child{ display:table-cell; }
+    body.editing-on #tabela .wrap-prop:hover {
+      transform: translateY(-1px);
+      border-color: rgba(23,32,27,.16);
+    }
+
+    #tabela col:last-child,
+    #tabela tr:not(.categoria) td:last-child { display: none; }
+    #tabela tr:not(.categoria) td:nth-last-child(2) { border-right: 0; }
+    body.editing-on #tabela col:last-child,
+    body.editing-on #tabela tr:not(.categoria) td:last-child { display: table-column; }
+    body.editing-on #tabela tr:not(.categoria) td:last-child { display: table-cell; }
+    body.editing-on #tabela tr:not(.categoria) td:nth-last-child(2) { border-right: 1px solid var(--line); }
+
+    .estado-typing {
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      animation: none;
+    }
+
+    @keyframes estadoTyping {
+      from { width: 0ch; }
+      to { width: var(--estado-ch, 0ch); }
+    }
+
+    @media (max-width: 620px) {
+      :root {
+      --col1: 30px;
+      --col2: 112px;
+      --props-col: 310px;
+      --table-width: calc(var(--col1) + var(--col2) + var(--props-col));
+      }
+
+      .app-shell {
+        padding: 10px;
+      }
+
+      .app-header {
+        margin: -10px -10px 10px;
+        padding: 12px 10px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .action-button {
+        width: 100%;
+        padding: 0 10px;
+      }
+
+      .table-panel {
+        border-radius: 0;
+        margin: 0 auto;
+        border-left: 0;
+        border-right: 0;
+      }
+
+      #tabela table {
+        min-width: 0;
+      }
+
+      #tabela tr.categoria td {
+        padding: 4px 8px;
+      }
+    }
   </style>
 </head>
 
-<body class="bg-gray-100 text-gray-900 p-4 text-sm">
-  <!-- Cabeçalho -->
-  <header class="mb-3">
-    <h1 class="text-sm font-semibold text-gray-700 tracking-wide uppercase mb-2">
-      Lista de compras - Cidade Altruísta Lda
-    </h1>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-grid">
+        <div>
+          <p class="eyebrow">Cidade Altruísta Lda</p>
+          <div class="title-row">
+            <h1>Lista de compras</h1>
+            <span class="status-pill"><em id="estado"></em></span>
+          </div>
+        </div>
+      </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      <button id="modoEdicao"
-        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-emerald-600 rounded-md shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-        <span>Edição</span>
-      </button>
+      <div class="toolbar">
+        <div class="actions" aria-label="Acoes da lista">
+          <button id="modoEdicao" class="action-button button-edit" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.86 4.49 19.5 7.14M6 18h2.75L19.5 7.25a1.87 1.87 0 0 0 0-2.65 1.87 1.87 0 0 0-2.65 0L6 15.35V18z" />
+            </svg>
+            <span class="button-label">Edição</span>
+          </button>
 
-      <button id="mostrarFaltas"
-        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>Em Falta</span>
-      </button>
+          <button id="mostrarFaltas" class="action-button button-faltas" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5m0 4h.01M10.3 3.86 2.82 17a2 2 0 0 0 1.74 3h14.88a2 2 0 0 0 1.74-3L13.7 3.86a2 2 0 0 0-3.4 0z" />
+            </svg>
+            <span class="button-label">Em falta</span>
+          </button>
 
-      <button id="mostrarComprados"
-        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-amber-500 rounded-md shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>Comprados</span>
-      </button>
+          <button id="mostrarComprados" class="action-button button-comprados" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.5 11.5 15 16 9.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+            </svg>
+            <span class="button-label">Comprados</span>
+          </button>
 
-      <button id="mostrarTudo"
-        class="w-full h-10 inline-flex items-center justify-center gap-1.5 px-3 text-xs font-medium text-white bg-gray-600 rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-        <span>Tudo</span>
-      </button>
-    </div>
-  </header>
+          <button id="mostrarTudo" class="action-button button-tudo" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            <span class="button-label">Tudo</span>
+          </button>
+        </div>
 
-  <!-- Pesquisa + estado -->
-  <div class="mb-4 flex items-center gap-3">
-    <div class="relative">
-      <input id="searchInput" type="text" placeholder="Pesquisar artigo…"
-             class="border-2 border-green-200 rounded-md px-2 py-1 w-60"/>
-      <ul id="suggestions"
-          class="absolute left-0 right-0 mt-1 max-h-40 overflow-auto shadow w-80 bg-white border rounded z-10 text-xs"></ul>
-    </div>
-    <em id="estado" class="text-xs text-gray-600 italic whitespace-nowrap"></em>
+        <div class="search-wrap">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
+          </svg>
+          <input id="searchInput" type="text" placeholder="Pesquisar artigo">
+          <ul id="suggestions"></ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="table-panel">
+      <section id="propertyFilters" class="property-filters" aria-label="Filtros por propriedade"></section>
+      <div id="tabela"></div>
+    </main>
   </div>
-
-  <!-- Tabela -->
-  <div id="tabela"></div>
 
   <script type="module" src="js/main.js"></script>
 </body>

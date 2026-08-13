@@ -74,11 +74,14 @@ export async function adicionarArtigo(nome, categoria = 'Outros') {
     if (alojamento) dados[alojamento] = { estado: '', quantidade: '0' };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('artigos')
-    .insert({ categoria, nome, dados });
+    .insert({ categoria, nome, dados })
+    .select('id,categoria,nome,dados')
+    .single();
 
   if (error) throw error;
+  return data;
 }
 
 export async function apagarArtigo(id) {

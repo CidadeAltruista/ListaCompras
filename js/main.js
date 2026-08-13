@@ -7,10 +7,99 @@ import { adicionarArtigo, obterDados } from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   let dados = [], rows = [];
+  let filtroBase = 'faltas';
+  const filtrosPropriedade = new Set();
+  const GRUPOS_PROPRIEDADE = [
+    { id: 'vistosas', label: 'Vistosas', props: ['Vistosa', '181-A', '181-B', '230-A', '230-B'] },
+    { id: 'jardim', label: 'Jardim', props: ['Jardim'] },
+    { id: 'francos', label: 'Francos', props: ['Francos'] },
+    { id: '424', label: '424', props: ['424'] },
+    { id: 'sta-catarina', label: 'Sta Catarina', props: ['Sta Catarina'] }
+  ];
 
   function normalizeText(s) {
     return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   }
+
+  function setActiveFilter(id) {
+    ['mostrarFaltas', 'mostrarComprados', 'mostrarTudo'].forEach(buttonId => {
+      document.getElementById(buttonId)?.classList.toggle('is-active', buttonId === id);
+    });
+  }
+
+  function obterAlojamentos() {
+    const cabecalho = dados[0] || [];
+    const alojamentos = [];
+    for (let j = 2; j < cabecalho.length; j += 2) {
+      if (cabecalho[j]) alojamentos.push({ nome: cabecalho[j], estadoCol: j, qtdeCol: j + 1 });
+    }
+    return alojamentos;
+  }
+
+  function estadoNaoVerde(row, alojamento) {
+    const estado = row[alojamento.estadoCol];
+    return estado && estado !== 'R';
+  }
+
+  function passaFiltroBase(row) {
+    if (filtroBase === 'tudo') return true;
+
+    for (let j = 2; j < row.length; j += 2) {
+      if (filtroBase === 'faltas' && (row[j] === 'F' || row[j] === 'C')) return true;
+      if (filtroBase === 'comprados' && row[j] === 'C') return true;
+    }
+
+    return false;
+  }
+
+  function passaFiltrosPropriedade(row) {
+    if (filtrosPropriedade.size === 0) return true;
+
+    const alojamentos = obterAlojamentos();
+    for (const filtroId of filtrosPropriedade) {
+      const grupo = GRUPOS_PROPRIEDADE.find(item => item.id === filtroId);
+      if (!grupo) continue;
+
+      for (const alojamento of alojamentos) {
+        if (grupo.props.includes(alojamento.nome) && estadoNaoVerde(row, alojamento)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function aplicarFiltros() {
+    const filteredData = [dados[0], dados[1]];
+    const filteredRows = [rows[0], rows[1]];
+
+    for (let i = 2; i < dados.length; i++) {
+      if (passaFiltroBase(dados[i]) && passaFiltrosPropriedade(dados[i])) {
+        filteredData.push(dados[i]);
+        filteredRows.push(rows[i]);
+      }
+    }
+
+    criarTabela(filteredData, filteredRows);
+  }
+
+  function renderFiltrosPropriedade() {
+    const el = document.getElementById('propertyFilters');
+    if (!el) return;
+
+    el.innerHTML = '';
+    for (const grupo of GRUPOS_PROPRIEDADE) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'property-filter';
+      button.textContent = grupo.label;
+      button.dataset.filterId = grupo.id;
+      button.classList.toggle('is-active', filtrosPropriedade.has(grupo.id));
+      el.appendChild(button);
+    }
+  }
+
 
   async function carregarDados() {
     atualizarEstado('A carregar dados...');
@@ -20,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dados = JSON.parse(JSON.stringify(json.dados));
       rows  = JSON.parse(JSON.stringify(json.rows));
 
-      criarTabela(dados, rows);           // desenha
+      renderFiltrosPropriedade();
+      aplicarFiltros();
       atualizarEstado('Pronto');          // <- sucesso (não chamamos updateStickyOffset aqui)
     } catch (e) {
       console.error('Erro no carregarDados():', e);
@@ -31,48 +121,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function filtrarFaltas() {
+    filtroBase = 'faltas';
+    setActiveFilter('mostrarFaltas');
     atualizarEstado('A aplicar filtro...');
-    await carregarDados();                // refresca dados base
-
-    const c = [dados[0], dados[1]];
-    const r = [rows[0], rows[1]];
-
-    for (let i = 2; i < dados.length; i++) {
-      for (let j = 2; j < dados[i].length; j += 2) {
-        if (dados[i][j] === 'F' || dados[i][j] === 'C') {
-          c.push(dados[i]);
-          r.push(rows[i]);
-          break;
-        }
-      }
-    }
-    criarTabela(c, r);
+    await carregarDados();
     atualizarEstado('Pronto');
   }
 
   async function mostrarTudo() {
+    filtroBase = 'tudo';
+    setActiveFilter('mostrarTudo');
     atualizarEstado('A mostrar todos...');
-    await carregarDados();                // já redesenha no fim
+    await carregarDados();
   }
 
   async function filtrarComprados() {
+    filtroBase = 'comprados';
+    setActiveFilter('mostrarComprados');
     atualizarEstado('A filtrar artigos COMPRADOS…');
     await carregarDados();
-
-    const filteredData = [dados[0], dados[1]];
-    const filteredRows = [rows[0], rows[1]];
-
-    for (let i = 2; i < dados.length; i++) {
-      let comprado = false;
-      for (let j = 2; j < dados[i].length; j += 2) {
-        if (dados[i][j] === 'C') { comprado = true; break; }
-      }
-      if (comprado) {
-        filteredData.push(dados[i]);
-        filteredRows.push(rows[i]);
-      }
-    }
-    criarTabela(filteredData, filteredRows);
     atualizarEstado('Pronto');
   }
 
@@ -127,8 +194,16 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!confirm(`Deseja mesmo adicionar o artigo “${nome}”?`)) return;
 
           atualizarEstado('A adicionar artigo...');
-          await adicionarArtigo(nome);
+          const novoArtigo = await adicionarArtigo(nome);
           await carregarDados();
+          const novoIndex = rows.indexOf(novoArtigo.id);
+          if (novoIndex !== -1) {
+            window.AUTO_EDIT_ROW_ID = novoArtigo.id;
+            criarTabela(
+              [dados[0], dados[1], dados[novoIndex]],
+              [rows[0], rows[1], rows[novoIndex]]
+            );
+          }
           atualizarEstado('Pronto');
           inp.value     = '';
           sug.innerHTML = '';
@@ -142,6 +217,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!inp.contains(e.target) && !sug.contains(e.target)) {
       sug.innerHTML = '';
     }
+  });
+
+  document.getElementById('propertyFilters')?.addEventListener('click', e => {
+    const button = e.target.closest('.property-filter');
+    if (!button) return;
+
+    const id = button.dataset.filterId;
+    if (filtrosPropriedade.has(id)) filtrosPropriedade.delete(id);
+    else filtrosPropriedade.add(id);
+
+    renderFiltrosPropriedade();
+    aplicarFiltros();
   });
 
   // Inicia já filtrado
