@@ -3,11 +3,9 @@ import {
   atualizarEstado,
   toggleModoEdicao
 } from './ui.js';
-import { atualizarCelula } from './api.js';
+import { adicionarArtigo, obterDados } from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sheetURL = 'https://script.google.com/macros/s/AKfycbyVUwW8_VNHxgutACoBX5cWAqJwxyIPZX1dwrGsSYD1FsLG1pdw_MGt9tjY4WxZEZMs/exec';
-
   let dados = [], rows = [];
 
   function normalizeText(s) {
@@ -17,12 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function carregarDados() {
     atualizarEstado('A carregar dados...');
     try {
-      const res   = await fetch(sheetURL);
-      const texto = await res.text();
-      const json  = JSON.parse(texto);
+      const json = await obterDados();
 
       dados = JSON.parse(JSON.stringify(json.dados));
-      rows  = dados.map((_,i) => i+1);
+      rows  = JSON.parse(JSON.stringify(json.rows));
 
       criarTabela(dados, rows);           // desenha
       atualizarEstado('Pronto');          // <- sucesso (não chamamos updateStickyOffset aqui)
@@ -130,26 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
         liAdd.addEventListener('click', async () => {
           if (!confirm(`Deseja mesmo adicionar o artigo “${nome}”?`)) return;
 
-          // encontra 1ª linha em branco
-          let blankIdx = dados.findIndex((r,i) => i >= 2 && !r[1]);
-          if (blankIdx === -1) {
-            blankIdx = dados.length;
-            rows.push(blankIdx + 1);
-            dados.push(Array(dados[0].length).fill(''));
-          }
-          const sheetRow = blankIdx + 1;
-
           atualizarEstado('A adicionar artigo...');
-          await atualizarCelula(sheetRow, 2, nome);
-
-          // atualiza local
-          dados[blankIdx][1] = nome;
-
-          // mostra só a nova linha
-          criarTabela(
-            [dados[0], dados[1], dados[blankIdx]],
-            [rows[0], rows[1], rows[blankIdx]]
-          );
+          await adicionarArtigo(nome);
+          await carregarDados();
           atualizarEstado('Pronto');
           inp.value     = '';
           sug.innerHTML = '';

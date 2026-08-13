@@ -1,4 +1,4 @@
-import { atualizarCelula } from './api.js';
+import { apagarArtigo, atualizarCelula } from './api.js';
 
 let modoEdicaoAtivo   = false;
 let dadosAtuais       = [];
@@ -277,7 +277,7 @@ export function criarTabela(dados, rowIndices) {
         if (!modoEdicaoAtivo) return;
         if (!confirm(`Eliminar “${row[1]}”?`)) return;
         atualizarEstado('Eliminando...');
-        await atualizarCelula(sheetRow, 2, '');
+        await apagarArtigo(sheetRow);
         tr.remove();
         atualizarEstado('Pronto');
       });
