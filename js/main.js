@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'jardim', label: 'Jardim', props: ['Jardim'] },
     { id: 'francos', label: 'Francos', props: ['Francos'] },
     { id: '424', label: '424', props: ['424'] },
-    { id: 'sta-catarina', label: 'Sta Catarina', props: ['Sta Catarina'] }
+    { id: 'sta-cat', label: 'Sta Cat.', props: ['Sta Cat.', 'Sta Catarina'] }
   ];
 
   function normalizeText(s) {

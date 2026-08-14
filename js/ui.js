@@ -71,7 +71,7 @@ const ORDEM_PROPRIEDADES = [
   'Jardim',
   'Francos',
   '424',
-  'Sta Catarina'
+  'Sta Cat.'
 ];
 
 function ordenarProps(props) {
@@ -162,12 +162,12 @@ export function criarTabela(dados, rowIndices) {
       // 2) Artigo
       const tdArt = document.createElement('td');
       tdArt.dataset.tipo = 'artigo';
-      tdArt.className = 'text-xs relative align-top font-semibold';
-      tdArt.style.padding = '5px 8px';
+      tdArt.className = 'text-[11px] relative align-top font-semibold';
+      tdArt.style.padding = '5px 6px';
 
       const spanText = document.createElement('span');
       spanText.textContent = row[1];
-      spanText.className = 'block pr-4 leading-4';
+      spanText.className = 'block pr-3 leading-3';
 
       const pencil = document.createElement('span');
       pencil.innerHTML = '&#9998;';

@@ -5,6 +5,7 @@ const RENAMES = new Map([
   ['V.181A', '181-A'],
   ['V.181B', '181-B'],
   ['V.230B', '230-A'],
+  ['Sta Catarina', 'Sta Cat.'],
 ]);
 
 const restUrl = `${SUPABASE_URL}/rest/v1/artigos`;

@@ -20,8 +20,8 @@
       --red: #c7352f;
       --amber: #c88317;
       --slate: #4f5b53;
-      --col1: 32px;
-      --col2: 128px;
+      --col1: 24px;
+      --col2: 112px;
       --props-col: 310px;
       --table-width: calc(var(--col1) + var(--col2) + var(--props-col));
     }
@@ -236,6 +236,13 @@
       margin-right: auto;
     }
 
+    @media (max-width: 520px) {
+      .table-panel {
+        margin-left: -10px;
+        margin-right: auto;
+      }
+    }
+
     .property-filters {
       width: max-content;
       max-width: 100%;
@@ -405,8 +412,8 @@
 
     @media (max-width: 620px) {
       :root {
-      --col1: 30px;
-      --col2: 112px;
+      --col1: 24px;
+      --col2: 104px;
       --props-col: 310px;
       --table-width: calc(var(--col1) + var(--col2) + var(--props-col));
       }
@@ -435,7 +442,7 @@
 
       .table-panel {
         border-radius: 0;
-        margin: 0 auto;
+        margin: 0 auto 0 -10px;
         border-left: 0;
         border-right: 0;
       }
