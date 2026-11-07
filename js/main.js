@@ -9,6 +9,7 @@ import { adicionarArtigo, obterDados } from './api.js';
 document.addEventListener('DOMContentLoaded', () => {
   let dados = [], rows = [];
   let filtroBase = 'faltas';
+  let artigoSelecionado = null;
   const filtrosPropriedade = new Set();
   const GRUPOS_PROPRIEDADE = [
     { id: 'vistosas', label: 'Vistosas', props: ['Vistosa', '181-A', '181-B', '230-A', '230-B'] },
@@ -86,6 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
     criarTabela(filteredData, filteredRows);
   }
 
+  function mostrarVistaAtual() {
+    if (artigoSelecionado !== null) {
+      const indice = rows.indexOf(artigoSelecionado);
+      if (indice >= 2) {
+        criarTabela([dados[0], dados[1], dados[indice]], [rows[0], rows[1], rows[indice]]);
+        return;
+      }
+      artigoSelecionado = null;
+    }
+    aplicarFiltros();
+  }
+
   function renderFiltrosPropriedade() {
     const el = document.getElementById('propertyFilters');
     if (!el) return;
@@ -109,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dados = json.dados;
       rows = json.rows;
       window.TODAS_CATEGORIAS = [...new Set(dados.slice(2).map(row => row[0]).filter(Boolean))];
-      aplicarFiltros();
+      mostrarVistaAtual();
     });
     filaAtualizacaoLista = atualizacao.catch(() => {});
     return atualizacao;
@@ -136,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function filtrarFaltas() {
+    artigoSelecionado = null;
     filtroBase = 'faltas';
     setActiveFilter('mostrarFaltas');
     atualizarEstado('A aplicar filtro...');
@@ -144,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function mostrarTudo() {
+    artigoSelecionado = null;
     filtroBase = 'tudo';
     setActiveFilter('mostrarTudo');
     atualizarEstado('A mostrar todos...');
@@ -151,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function filtrarComprados() {
+    artigoSelecionado = null;
     filtroBase = 'comprados';
     setActiveFilter('mostrarComprados');
     atualizarEstado('A filtrar artigos COMPRADOS…');
@@ -186,12 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const idx  = norm.indexOf(term);
       if (idx !== -1) hits.push({ idx, i, art });
     }
-    hits.sort((a,b) => a.idx - b.idx).slice(0,5).forEach(h => {
+    hits.sort((a,b) => a.idx - b.idx).slice(0,10).forEach(h => {
       const li = document.createElement('li');
       li.textContent = h.art;
       li.className = 'px-2 py-1 hover:bg-gray-200 cursor-pointer text-xs';
       li.addEventListener('click', () => {
-        criarTabela([dados[0], dados[1], dados[h.i]], [rows[0], rows[1], rows[h.i]]);
+        artigoSelecionado = rows[h.i];
+        mostrarVistaAtual();
         sug.innerHTML = '';
         inp.value     = '';
       });
@@ -213,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
           await carregarDados();
           const novoIndex = rows.indexOf(novoArtigo.id);
           if (novoIndex !== -1) {
+            artigoSelecionado = novoArtigo.id;
             window.AUTO_EDIT_ROW_ID = novoArtigo.id;
             criarTabela(
               [dados[0], dados[1], dados[novoIndex]],
@@ -239,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!button) return;
 
     const id = button.dataset.filterId;
+    artigoSelecionado = null;
     if (filtrosPropriedade.has(id)) filtrosPropriedade.delete(id);
     else filtrosPropriedade.add(id);
 
