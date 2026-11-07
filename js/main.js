@@ -1,7 +1,8 @@
 import {
   criarTabela,
   atualizarEstado,
-  toggleModoEdicao
+  toggleModoEdicao,
+  definirAtualizacaoLista
 } from './ui.js';
 import { adicionarArtigo, obterDados } from './api.js';
 
@@ -14,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     { id: 'jardim', label: 'Jardim', props: ['Jardim'] },
     { id: 'francos', label: 'Francos', props: ['Francos'] },
     { id: '424', label: '424', props: ['424'] },
-    { id: 'sta-cat', label: 'Sta Cat.', props: ['Sta Cat.', 'Sta Catarina'] }
+    { id: 'sta-cat', label: 'Sta Cat.', props: ['Sta Cat.', 'Sta Catarina'] },
+    { id: 'bolhao', label: 'Bolhão', props: ['Bolhão'] }
   ];
 
   function normalizeText(s) {
@@ -99,6 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
       el.appendChild(button);
     }
   }
+
+  let filaAtualizacaoLista = Promise.resolve();
+  definirAtualizacaoLista(() => {
+    const atualizacao = filaAtualizacaoLista.then(async () => {
+      const json = await obterDados();
+      dados = json.dados;
+      rows = json.rows;
+      window.TODAS_CATEGORIAS = [...new Set(dados.slice(2).map(row => row[0]).filter(Boolean))];
+      aplicarFiltros();
+    });
+    filaAtualizacaoLista = atualizacao.catch(() => {});
+    return atualizacao;
+  });
 
 
   async function carregarDados() {

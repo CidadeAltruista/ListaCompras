@@ -3,6 +3,11 @@ import { apagarArtigo, atualizarCelula } from './api.js';
 let modoEdicaoAtivo   = false;
 let dadosAtuais       = [];
 let rowIndicesAtuais  = [];
+let atualizarLista = null;
+
+export function definirAtualizacaoLista(callback) {
+  atualizarLista = callback;
+}
 
 /** Mostra mensagem de estado (com animação tipo “typing”) */
 let _estadoTimer; // opcional
@@ -65,13 +70,19 @@ function classesPorEstado(estado) {
 
 const ORDEM_PROPRIEDADES = [
   'Vistosa',
-  '181-A',
-  '181-B',
   '230-A',
   'Jardim',
-  'Francos',
   '424',
-  'Sta Cat.'
+  'Sta Cat.',
+  '181-A',
+  '181-B',
+  'Francos',
+  'Bolhão'
+];
+
+const FILAS_PROPRIEDADES = [
+  ['Vistosa', '230-A', 'Jardim', '424', 'Sta Cat.'],
+  ['181-A', '181-B', 'Francos', 'Bolhão']
 ];
 
 function ordenarProps(props) {
@@ -192,17 +203,25 @@ export function criarTabela(dados, rowIndices) {
         qty     : row[p.qtdeCol] || '0'
       }));
 
-      let linhas = chunkArray(segmentos, 4);
-      const MAX_LINHAS = 2;
-      const excedente = Math.max(0, linhas.length - MAX_LINHAS);
-      linhas = linhas.slice(0, MAX_LINHAS);
+      const porNome = new Map(segmentos.map(segmento => [segmento.nome.toLowerCase(), segmento]));
+      const nomesEmFila = new Set();
+      const linhas = FILAS_PROPRIEDADES
+        .map(fila => fila
+          .map(nome => {
+            nomesEmFila.add(nome.toLowerCase());
+            return porNome.get(nome.toLowerCase());
+          })
+          .filter(Boolean))
+        .filter(fila => fila.length);
+      const restantes = segmentos.filter(segmento => !nomesEmFila.has(segmento.nome.toLowerCase()));
+      if (restantes.length) linhas.push(...chunkArray(restantes, 4));
 
       const container = document.createElement('div');
       container.className = 'aloj-container space-y-0.5';
 
       linhas.forEach(linha => {
         const rowDiv = document.createElement('div');
-        rowDiv.className = 'flex flex-wrap gap-x-1.5 gap-y-0.5 text-[10px] leading-3';
+        rowDiv.className = 'property-row grid grid-cols-5 gap-x-1 gap-y-0.5 text-[10px] leading-3';
         linha.forEach(seg => {
           const wrap = document.createElement('span');
           const cls = classesPorEstado(seg.estado);
@@ -227,9 +246,14 @@ export function criarTabela(dados, rowIndices) {
             btnQty.className = `ml-0.5 tabular-nums ${novoCls.qty}`;
 
             atualizarEstado('A enviar alteração...');
-            await atualizarCelula(sheetRow, seg.estadoCol + 1, next);
-            atualizarEstado('Pronto');
-            updateSumAndArt();
+            try {
+              await atualizarCelula(sheetRow, seg.estadoCol + 1, next, seg.nome);
+              await atualizarLista();
+              atualizarEstado('Pronto');
+            } catch (error) {
+              console.error('Erro ao atualizar estado:', error);
+              atualizarEstado('Erro ao atualizar estado.');
+            }
           });
 
           // Quantidade (edita inline)
@@ -260,8 +284,14 @@ export function criarTabela(dados, rowIndices) {
               updateSumAndArt();
 
               atualizarEstado('A enviar quantidade...');
-              await atualizarCelula(sheetRow, seg.qtdeCol + 1, novo);
-              atualizarEstado('Pronto');
+              try {
+                await atualizarCelula(sheetRow, seg.qtdeCol + 1, novo, seg.nome);
+                await atualizarLista();
+                atualizarEstado('Pronto');
+              } catch (error) {
+                console.error('Erro ao atualizar quantidade:', error);
+                atualizarEstado('Erro ao atualizar quantidade.');
+              }
             };
 
             input.addEventListener('keydown', (ev) => {
@@ -277,14 +307,6 @@ export function criarTabela(dados, rowIndices) {
         });
         container.appendChild(rowDiv);
       });
-
-      if (excedente > 0) {
-        const badge = document.createElement('div');
-        badge.className = 'text-[10px] leading-4 text-gray-500 pt-0.5';
-        const restantes = Math.max(0, segmentos.length - 8); // 8 = 2 linhas * 4
-        badge.textContent = `+${restantes} alojamento(s) oculto(s)`;
-        container.appendChild(badge);
-      }
 
       tdProps.appendChild(container);
       tr.appendChild(tdProps);

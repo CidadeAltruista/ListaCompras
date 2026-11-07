@@ -381,6 +381,26 @@
       max-width: 100%;
     }
 
+    #tabela .property-row {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    #tabela .property-row .wrap-prop {
+      width: max-content;
+      max-width: 100%;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      word-break: normal;
+      overflow-wrap: normal;
+    }
+
+    #tabela .wrap-prop > span {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      word-break: normal;
+      overflow-wrap: normal;
+    }
+
     #tabela .wrap-prop {
       display: inline-flex;
       align-items: center;
